@@ -1,0 +1,16 @@
+[camera]
+source = 0
+width = 640
+height = 480
+
+[inference]
+min_detection_confidence = 0.7
+min_tracking_confidence = 0.5
+
+[display]
+show_preview = true
+
+[retroarch]
+path = "C:\\RetroArch-Win64\\retroarch.exe"
+core = "C:\\RetroArch-Win64\\cores\\mednafen_psx_libretro.dll"
+rom = "C:\\RetroArch-Win64\\downloads\\Tony Hawk's Pro Skater (USA).cue"

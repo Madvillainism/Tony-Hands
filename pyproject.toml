@@ -1,0 +1,14 @@
+[project]
+name = "tony-hands"
+version = "0.1.0"
+description = "Gesture-controlled Tony Hawk's Pro Skater via MediaPipe hand tracking"
+requires-python = ">=3.11"
+dependencies = [
+    "opencv-python>=4.8",
+    "mediapipe>=0.10.0",
+    "pynput>=1.7",
+    "numpy>=1.24",
+]
+
+[tool.pysen]
+version = "0.1"
