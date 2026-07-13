@@ -1,107 +1,55 @@
-# Tony Hands
+# 🛹 Tony-Hands — Gesture-Controlled Tony Hawk's Pro Skater
 
-Gesture-controlled **Tony Hawk's Pro Skater** using MediaPipe hand tracking — play with your hands via webcam, no controller needed.
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![MediaPipe](https://img.shields.io/badge/MediaPipe-Hands-00C7B7?style=for-the-badge&logo=google&logoColor=white)](https://github.com/google-ai-edge/mediapipe)
+[![OpenCV](https://img.shields.io/badge/OpenCV-v4-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white)](https://opencv.org/)
+[![RetroArch](https://img.shields.io/badge/RetroArch-PS1_Emulation-E01E3C?style=for-the-badge&logo=retroarch&logoColor=white)](https://www.retroarch.com/)
 
-## How it works
+> **Tony-Hands** es un sistema de control biométrico experimental que te permite jugar *Tony Hawk's Pro Skater* (PS1) usando únicamente tu cámara web y tus manos. Al traducir coordenadas espaciales en tiempo real a señales de teclado virtuales, el proyecto reemplaza los controles físicos por gestos corporales fluidos, intuitivos y de baja latencia.
 
-The camera feed is split vertically into two halves. Your hand position and gesture on each side controls the game:
+🎨 **El Reto Técnico:** Jugar THPS requiere precisión absoluta. Este software resuelve mecánicas complejas como la inercia de la aceleración y la física nativa del *Ollie* (saltar al soltar un botón) mediante ecuaciones geométricas deterministas sobre los landmarks de la mano, esquivando la necesidad de modelos de Inteligencia Artificial pesados o latencia de red.
 
-```
-Left half (x < 0.5) — MOVEMENT           |  Right half (x >= 0.5) — ACTIONS
-──────────────────────────────────────────┼─────────────────────────────────────
-x < 0.18  → D-Pad LEFT                   |  Open palm  → Cross (ollie / jump)
-0.18–0.32 → NEUTRAL (nothing pressed)    |  Fist       → Circle (trick / grab)
-x > 0.32  → D-Pad RIGHT                  |
-```
+---
 
-## Requirements
+## 🎮 ¿Cómo se Controla el Skater? (Mapping Spec)
 
-- Windows (uses Win32 API for window focus)
-- Python 3.11+
-- Webcam
-- [RetroArch](https://retroarch.com) with Beetle PSX core
-- Tony Hawk's Pro Skater (PSX) ROM
-- MediaPipe hand landmarker model (`hand_landmarker.task`) — downloaded automatically or placed in the project root
+El sistema procesa de forma independiente la información espacial de ambas manos para separar la aceleración del control de dirección:
 
-## Setup
+### 🖐️ Mano Derecha: Aceleración y Ollie (Física Invertida)
+En *Tony Hawk's Pro Skater*, el jugador se agacha para ganar velocidad al mantener presionado el botón de salto (`X`) y realiza el *Ollie* únicamente al **soltarlo**. El sistema replica este comportamiento de forma nativa:
+* **Puño Cerrado (Hold `X`):** El bot emula la presión continua del botón. El skater se agacha y gana velocidad.
+* **Mano Abierta (Release `X`):** El bot suelta el botón instantáneamente para activar el salto (*Ollie*).
+* **Ecuación de Activación:**
+    $$\Delta Y = y_{\text{wrist}} - y_{\text{index\_tip}}$$
 
-```powershell
-# Clone
-git clone https://github.com/Madvillainism/Tony-Hands.git
-cd Tony-Hands
+### 🤚 Mano Izquierda: Dirección (Giro)
+* **Neutral:** Mano centrada en su cuadrante.
+* **Inclinación Izquierda (Left):** Desplazamiento del landmark de la muñeca a la izquierda de la zona muerta configurada.
+* **Inclinación Derecha (Right):** Desplazamiento del landmark de la muñeca a la derecha de la zona muerta.
 
-# Install dependencies
-pip install -e .
+---
 
-# Download the MediaPipe hand landmarker model
-# (place hand_landmarker.task in the project root)
-```
+## ⚡ Características Principales
 
-## Configuration
+* **⚡ Control de Latencia Extremo (<33ms):** Procesamiento de imágenes en hilos optimizados de OpenCV con un formato de entrada reducido ($640 \times 480$) para asegurar frames por segundo (FPS) estables y evitar el retardo en la respuesta de los trucos.
+* **🎯 Zonas Muertas Dinámicas (Deadzones):** Previene falsos positivos en el giro al mantener un área central de tolerancia para la mano izquierda.
+* **⚙️ Zero-Config Emulator Bridge:** El script inyecta eventos de teclado directos usando la librería `pynput`, compatibles nativamente con la asignación de teclas de RetroArch (o cualquier emulador de PS1).
 
-Edit `config.toml`:
+---
 
-```toml
-[camera]
-source = 0          # webcam index
-width = 640
-height = 480
+## 📂 Estructura de Especificaciones (SSD Layout)
 
-[retroarch]
-path = "C:\\RetroArch-Win64\\retroarch.exe"
-core = "C:\\RetroArch-Win64\\cores\\mednafen_psx_libretro.dll"
-rom = "C:\\RetroArch-Win64\\downloads\\Tony Hawk's Pro Skater (USA).cue"
-```
+El proyecto sigue una estructura de diseño y desarrollo modular estricta guiada por especificaciones:
 
-## RetroArch key bindings
-
-RetroArch must use keyboard bindings for player 1:
-
-| Setting | Value | Button |
-|---------|-------|--------|
-| `input_player1_a` | `"x"` | Cross (ollie) |
-| `input_player1_b` | `"z"` | Circle (trick) |
-| `input_player1_left` | `"left"` | D-Pad left |
-| `input_player1_right` | `"right"` | D-Pad right |
-
-> **Note**: The keyboard sends VK_Z for Cross and VK_X for Circle on this system (letter keys are remapped). Bindings are handled automatically by `key_mapper.py`.
-
-## Running
-
-```powershell
-# Launch RetroArch + pipeline (default)
-.\run.ps1
-
-# Pipeline only (no RetroArch launch)
-.\run.ps1 -NoRetroArch
-
-# No preview window (keeps RetroArch focused)
-.\run.ps1 -NoPreview
-
-# Or manually:
-python -m src.main
-```
-
-Press **ESC** on the preview window to quit.
-
-## Project structure
-
-```
-tony-hands/
-├── src/
-│   ├── main.py                    # entry point
-│   ├── pipeline.py                # main loop, overlay, window focus
-│   ├── bridge/
-│   │   ├── input_bridge.py        # routes hand data → key presses
-│   │   └── key_mapper.py          # maps action names → pynput key objects
-│   ├── capture/
-│   │   └── webcam.py              # threaded webcam capture
-│   ├── gesture/
-│   │   ├── movement.py            # MovementStateMachine (3-zone left half)
-│   │   └── actions.py             # ActionStateMachine (cross/circle by palm state)
-│   └── inference/
-│       └── mediapipe_hands.py     # MediaPipe HandLandmarker, palm detection
-├── config.toml                    # user configuration
-├── pyproject.toml                 # Python dependencies
-└── run.ps1                        # launch script
-```
+```text
+spec/
+├── constitution/
+│   ├── mision-vision.md      # Enfoque e impacto de la interfaz natural (NUI)
+│   ├── tech-stack.md         # Bloqueo del entorno (Python, MediaPipe, pynput)
+│   └── roadmap.md            # Planificación de fases (Visión -> Movimiento -> Ollie)
+├── features/
+│   ├── 001-vision-pipeline   # Captura y optimización de frames con OpenCV
+│   ├── 002-skater-movement   # Algoritmo de giro y zonas muertas (Mano Izquierda)
+│   └── 003-ollie-physics     # Máquina de estados de la física del salto (Mano Derecha)
+├── CONTEXT.md                # Guardarraíles de latencia y estado global de la compilación
+└── AGENTS.md                 # Asignación de tareas a los subagentes del entorno
