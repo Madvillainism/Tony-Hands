@@ -15,13 +15,13 @@ class InputBridge:
         self._actions = ActionStateMachine()
 
     def process(self, state: GestureState) -> None:
-        for x, y, palm in state.hands:
+        for x, y, gesture in state.hands:
             if x < HALF:
-                move_events = self._movement.update(x)
+                move_events = self._movement.update(x, y)
                 for action, is_press in move_events:
                     self._send(action, is_press)
             else:
-                action_events = self._actions.update(palm)
+                action_events = self._actions.update(gesture)
                 for action, is_press in action_events:
                     self._send(action, is_press)
 

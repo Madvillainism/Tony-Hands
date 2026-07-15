@@ -5,35 +5,39 @@ class ActionState(Enum):
     IDLE = "idle"
     CROSS = "cross"
     CIRCLE = "circle"
+    TRIANGLE = "triangle"
+    SQUARE = "square"
+
+
+GESTURE_TO_ACTION: dict[str, ActionState] = {
+    "palm": ActionState.CROSS,
+    "fist": ActionState.CIRCLE,
+    "peace": ActionState.TRIANGLE,
+    "l_shape": ActionState.SQUARE,
+}
 
 
 class ActionStateMachine:
     def __init__(self):
         self._state = ActionState.IDLE
 
-    def update(self, is_open_palm: bool | None) -> list[tuple[str, bool]]:
+    def update(self, gesture: str | None) -> list[tuple[str, bool]]:
         events: list[tuple[str, bool]] = []
 
-        if is_open_palm is None:
-            if self._state == ActionState.CROSS:
-                events.append(("cross", False))
-            elif self._state == ActionState.CIRCLE:
-                events.append(("circle", False))
-            self._state = ActionState.IDLE
+        if gesture is None:
+            if self._state != ActionState.IDLE:
+                events.append((self._state.value, False))
+                self._state = ActionState.IDLE
             return events
 
-        if is_open_palm:
-            if self._state == ActionState.CIRCLE:
-                events.append(("circle", False))
-            if self._state != ActionState.CROSS:
-                events.append(("cross", True))
-            self._state = ActionState.CROSS
-        else:
-            if self._state == ActionState.CROSS:
-                events.append(("cross", False))
-            if self._state != ActionState.CIRCLE:
-                events.append(("circle", True))
-            self._state = ActionState.CIRCLE
+        target = GESTURE_TO_ACTION.get(gesture, ActionState.IDLE)
+
+        if target != self._state:
+            if self._state != ActionState.IDLE:
+                events.append((self._state.value, False))
+            if target != ActionState.IDLE:
+                events.append((target.value, True))
+            self._state = target
 
         return events
 

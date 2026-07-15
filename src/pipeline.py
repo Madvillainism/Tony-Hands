@@ -8,7 +8,7 @@ import numpy as np
 
 from src.bridge.input_bridge import InputBridge
 from src.capture.webcam import WebcamThread
-from src.gesture.movement import LEFT_MAX, RIGHT_MIN
+from src.gesture.movement import DOWN_MIN, LEFT_MAX, RIGHT_MIN, UP_MAX
 from src.inference.mediapipe_hands import GestureState, InferenceWorker
 
 HALF = 0.5
@@ -119,6 +119,8 @@ class Pipeline:
         half_x = int(HALF * w)
         left_x = int(LEFT_MAX * w)
         right_x = int(RIGHT_MIN * w)
+        up_y = int(UP_MAX * h)
+        down_y = int(DOWN_MIN * h)
         cv2.line(frame, (half_x, 0), (half_x, h), (0, 255, 255), 2)
 
         cv2.putText(
@@ -146,7 +148,18 @@ class Pipeline:
         cv2.line(frame, (left_x, 0), (left_x, h), (100, 100, 100), 1)
         cv2.line(frame, (right_x, 0), (right_x, h), (100, 100, 100), 1)
 
-        for x, y, palm in state.hands:
+        cv2.putText(
+            frame, "U", (4, up_y - 6),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 0), 1,
+        )
+        cv2.putText(
+            frame, "D", (4, down_y + 16),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 0), 1,
+        )
+        cv2.line(frame, (0, up_y), (half_x, up_y), (100, 100, 100), 1)
+        cv2.line(frame, (0, down_y), (half_x, down_y), (100, 100, 100), 1)
+
+        for x, y, gesture in state.hands:
             px = int(x * w)
             py = int(y * h)
             is_left_side = x < HALF
@@ -154,14 +167,24 @@ class Pipeline:
             cv2.circle(frame, (px, py), 10, color, -1)
 
             if is_left_side:
+                parts = []
                 if x < LEFT_MAX:
-                    label = "D-PAD (L)"
+                    parts.append("L")
                 elif x > RIGHT_MIN:
-                    label = "D-PAD (R)"
-                else:
-                    label = "NEUTRAL"
+                    parts.append("R")
+                if y < UP_MAX:
+                    parts.append("U")
+                elif y > DOWN_MIN:
+                    parts.append("D")
+                label = f"D-PAD ({'+'.join(parts)})" if parts else "NEUTRAL"
             else:
-                label = "CROSS (ollie)" if palm else "CIRCLE (trick)"
+                action_name = {
+                    "palm": "CROSS (ollie)",
+                    "fist": "CIRCLE (trick)",
+                    "peace": "TRIANGLE",
+                    "l_shape": "SQUARE",
+                }.get(gesture or "", "IDLE")
+                label = action_name
 
             cv2.putText(
                 frame, label, (px + 14, py + 4),
@@ -171,7 +194,7 @@ class Pipeline:
         cv2.rectangle(frame, (0, h - 40), (w, h), (0, 0, 0), -1)
         cv2.putText(
             frame,
-            "L HALF = MOVEMENT (L / N / R)  |  R HALF = open palm = Cross  /  fist = Circle",
+            "L HALF = MOVE (L/N/R + U/D)  |  R HALF = palm=Cross  fist=Circle  peace=Triangle  L=Square",
             (10, h - 10),
             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1,
         )

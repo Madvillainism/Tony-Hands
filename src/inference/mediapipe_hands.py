@@ -14,23 +14,65 @@ from mediapipe.tasks.python.vision.hand_landmarker import (
 
 MCP_INDICES = [5, 9, 13, 17]
 TIP_INDICES = [8, 12, 16, 20]
+THUMB_MCP = 2
+THUMB_TIP = 4
 
 
 @dataclass
 class GestureState:
     timestamp: float = 0.0
-    hands: list[tuple[float, float, bool | None]] = field(default_factory=list)
+    hands: list[tuple[float, float, str | None]] = field(default_factory=list)
     fps: float = 0.0
 
 
+def _is_finger_extended(landmarks: list, tip_idx: int, mcp_idx: int) -> bool:
+    return landmarks[tip_idx].y < landmarks[mcp_idx].y - 0.02
+
+
+def _is_finger_curled(landmarks: list, tip_idx: int, mcp_idx: int) -> bool:
+    return landmarks[tip_idx].y > landmarks[mcp_idx].y + 0.01
+
+
+def _is_thumb_extended(landmarks: list) -> bool:
+    dx = landmarks[THUMB_TIP].x - landmarks[5].x
+    dy = landmarks[THUMB_TIP].y - landmarks[5].y
+    return (dx * dx + dy * dy) > 0.0064
+
+
+def _is_peace_sign(landmarks: list) -> bool:
+    return (
+        _is_finger_extended(landmarks, 8, 5)
+        and _is_finger_extended(landmarks, 12, 9)
+        and _is_finger_curled(landmarks, 16, 13)
+        and _is_finger_curled(landmarks, 20, 17)
+    )
+
+
+def _is_l_gesture(landmarks: list) -> bool:
+    return (
+        _is_thumb_extended(landmarks)
+        and _is_finger_extended(landmarks, 8, 5)
+        and _is_finger_curled(landmarks, 12, 9)
+        and _is_finger_curled(landmarks, 16, 13)
+        and _is_finger_curled(landmarks, 20, 17)
+    )
+
+
 def _is_open_palm(landmarks: list) -> bool:
-    count = 0
-    for mcp_idx, tip_idx in zip(MCP_INDICES, TIP_INDICES):
-        mcp = landmarks[mcp_idx]
-        tip = landmarks[tip_idx]
-        if tip.y < mcp.y - 0.02:
-            count += 1
-    return count >= 2
+    return sum(
+        _is_finger_extended(landmarks, tip_idx, mcp_idx)
+        for mcp_idx, tip_idx in zip(MCP_INDICES, TIP_INDICES)
+    ) >= 2
+
+
+def _classify_gesture(landmarks: list) -> str:
+    if _is_peace_sign(landmarks):
+        return "peace"
+    if _is_l_gesture(landmarks):
+        return "l_shape"
+    if _is_open_palm(landmarks):
+        return "palm"
+    return "fist"
 
 
 class InferenceWorker:
@@ -75,10 +117,9 @@ class InferenceWorker:
 
         if result.hand_landmarks and result.handedness:
             for hand_lms, handedness in zip(result.hand_landmarks, result.handedness):
-                label = handedness[0].category_name if handedness else "Unknown"
                 wrist = hand_lms[0]
-                palm = _is_open_palm(hand_lms)
-                state.hands.append((wrist.x, wrist.y, palm))
+                gesture = _classify_gesture(hand_lms)
+                state.hands.append((wrist.x, wrist.y, gesture))
 
         return state
 
