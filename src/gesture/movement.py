@@ -13,8 +13,8 @@ class VDir(Enum):
     DOWN = "down"
 
 
-LEFT_MAX = 0.18
-RIGHT_MIN = 0.32
+LEFT_MAX = 0.20
+RIGHT_MIN = 0.30
 UP_MAX = 0.25
 DOWN_MIN = 0.75
 

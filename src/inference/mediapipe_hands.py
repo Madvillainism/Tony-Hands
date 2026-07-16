@@ -16,6 +16,7 @@ MCP_INDICES = [5, 9, 13, 17]
 TIP_INDICES = [8, 12, 16, 20]
 THUMB_MCP = 2
 THUMB_TIP = 4
+PALM_INDICES = [0, 5, 9, 13, 17]
 
 
 @dataclass
@@ -58,6 +59,16 @@ def _is_l_gesture(landmarks: list) -> bool:
     )
 
 
+def _is_thumbs_up(landmarks: list) -> bool:
+    return (
+        _is_thumb_extended(landmarks)
+        and _is_finger_curled(landmarks, 8, 5)
+        and _is_finger_curled(landmarks, 12, 9)
+        and _is_finger_curled(landmarks, 16, 13)
+        and _is_finger_curled(landmarks, 20, 17)
+    )
+
+
 def _is_open_palm(landmarks: list) -> bool:
     return sum(
         _is_finger_extended(landmarks, tip_idx, mcp_idx)
@@ -70,6 +81,8 @@ def _classify_gesture(landmarks: list) -> str:
         return "peace"
     if _is_l_gesture(landmarks):
         return "l_shape"
+    if _is_thumbs_up(landmarks):
+        return "thumbs_up"
     if _is_open_palm(landmarks):
         return "palm"
     return "fist"
@@ -115,11 +128,12 @@ class InferenceWorker:
 
         state = GestureState(timestamp=tick, fps=self.fps)
 
-        if result.hand_landmarks and result.handedness:
-            for hand_lms, handedness in zip(result.hand_landmarks, result.handedness):
-                wrist = hand_lms[0]
+        if result.hand_landmarks:
+            for hand_lms in result.hand_landmarks:
+                cx = sum(hand_lms[i].x for i in PALM_INDICES) / len(PALM_INDICES)
+                cy = sum(hand_lms[i].y for i in PALM_INDICES) / len(PALM_INDICES)
                 gesture = _classify_gesture(hand_lms)
-                state.hands.append((wrist.x, wrist.y, gesture))
+                state.hands.append((cx, cy, gesture))
 
         return state
 

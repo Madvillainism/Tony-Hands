@@ -180,9 +180,9 @@ class Pipeline:
             else:
                 action_name = {
                     "palm": "CROSS (ollie)",
-                    "fist": "CIRCLE (trick)",
-                    "peace": "TRIANGLE",
-                    "l_shape": "SQUARE",
+                    "peace": "SQUARE",
+                    "l_shape": "TRIANGLE",
+                    "thumbs_up": "CIRCLE (trick)",
                 }.get(gesture or "", "IDLE")
                 label = action_name
 
@@ -194,7 +194,7 @@ class Pipeline:
         cv2.rectangle(frame, (0, h - 40), (w, h), (0, 0, 0), -1)
         cv2.putText(
             frame,
-            "L HALF = MOVE (L/N/R + U/D)  |  R HALF = palm=Cross  fist=Circle  peace=Triangle  L=Square",
+            "L HALF = MOVE (L/N/R + U/D)  |  R HALF = palm=Cross  thumbs=Circle  peace=Square  L=Triangle",
             (10, h - 10),
             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1,
         )
