@@ -44,6 +44,7 @@ class Pipeline:
         self._fps_history: deque[float] = deque(maxlen=30)
         self._running = False
         self._last_focus_check = 0.0
+        self._button_icons = self._load_button_icons()
 
     @property
     def fps(self) -> float:
@@ -102,6 +103,35 @@ class Pipeline:
         self._running = False
         self._webcam.stop()
         cv2.destroyAllWindows()
+
+    def _load_button_icons(self) -> dict[str, np.ndarray]:
+        icons: dict[str, np.ndarray] = {}
+        try:
+            img = cv2.imread("ps-buttons.jpg")
+            if img is None:
+                return icons
+            crops = {
+                "triangle": img[25:93, 95:163],
+                "circle": img[100:167, 177:244],
+                "cross": img[172:240, 93:161],
+                "square": img[98:167, 12:81],
+            }
+            for name, crop in crops.items():
+                icons[name] = cv2.resize(crop, (48, 48), interpolation=cv2.INTER_AREA)
+        except Exception:
+            pass
+        return icons
+
+    def _draw_button_icon(self, frame: np.ndarray, icon: np.ndarray, x: int, y: int) -> None:
+        h, w = icon.shape[:2]
+        fx = min(max(x, 0), frame.shape[1] - w)
+        fy = min(max(y, 0), frame.shape[0] - h)
+        roi = frame[fy : fy + h, fx : fx + w]
+        gray = cv2.cvtColor(icon, cv2.COLOR_BGR2GRAY)
+        _, mask = cv2.threshold(gray, 230, 255, cv2.THRESH_BINARY_INV)
+        mask_f = mask.astype(np.float32)[..., None] / 255.0
+        blended = icon.astype(np.float32) * mask_f + roi.astype(np.float32) * (1 - mask_f)
+        frame[fy : fy + h, fx : fx + w] = blended.astype(np.uint8)
 
     def _draw_overlay(self, frame: np.ndarray, state: GestureState) -> None:
         h, w = frame.shape[:2]
@@ -177,24 +207,30 @@ class Pipeline:
                 elif y > DOWN_MIN:
                     parts.append("D")
                 label = f"D-PAD ({'+'.join(parts)})" if parts else "NEUTRAL"
+                cv2.putText(
+                    frame, label, (px + 14, py + 4),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2,
+                )
             else:
-                action_name = {
-                    "palm": "CROSS (ollie)",
-                    "peace": "SQUARE",
-                    "l_shape": "TRIANGLE",
-                    "thumbs_up": "CIRCLE (trick)",
-                }.get(gesture or "", "IDLE")
-                label = action_name
-
-            cv2.putText(
-                frame, label, (px + 14, py + 4),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2,
-            )
+                button_name = {
+                    "palm": "cross",
+                    "thumbs_up": "circle",
+                    "peace": "triangle",
+                    "l_shape": "square",
+                }.get(gesture or "")
+                icon = self._button_icons.get(button_name) if button_name else None
+                if icon is not None:
+                    self._draw_button_icon(frame, icon, px + 14, py - 24)
+                else:
+                    cv2.putText(
+                        frame, "IDLE", (px + 14, py + 4),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2,
+                    )
 
         cv2.rectangle(frame, (0, h - 40), (w, h), (0, 0, 0), -1)
         cv2.putText(
             frame,
-            "L HALF = MOVE (L/N/R + U/D)  |  R HALF = palm=Cross  thumbs=Circle  peace=Square  L=Triangle",
+            "L HALF = MOVE (L/N/R + U/D)  |  R HALF = palm=Cross  thumbs=Circle  peace=Triangle  L=Square",
             (10, h - 10),
             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1,
         )
