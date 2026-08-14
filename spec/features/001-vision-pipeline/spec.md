@@ -18,14 +18,17 @@ InferenceWorker
 ```python
 @dataclass
 class GestureState:
-    timestamp: float          # time.perf_counter()
-    left_wrist: tuple[float, float] | None   # (x, y) normalized
-    left_index: tuple[float, float] | None
-    right_wrist: tuple[float, float] | None
-    right_index: tuple[float, float] | None
-    delta_y: float | None      # right_wrist.y - right_index.y
-    fps: float
+    timestamp: float                     # time.perf_counter()
+    hands: list[tuple[float, float, str | None, str]]  # [(palm_x, palm_y, gesture, side), ...]
+    landmarks: list[list[tuple[float, float]]]         # 21-point landmarks per hand
+    fps: float                           # rolling average FPS
 ```
+
+`hands` contains one tuple per detected hand: normalized smoothed palm-center
+`(x, y)`, the classified gesture name (`"peace"`, `"l_shape"`, `"thumbs_up"`,
+`"palm"`, `"fist"`, or `None`), and the sticky control side (`"left"` /
+`"right"`). Hands are tracked across frames by identity, so order and side do
+not flip while moving.
 
 ## Acceptance Criteria
 1. Webcam opens within 2 seconds of `start()`.

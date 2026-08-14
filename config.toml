@@ -10,6 +10,22 @@ min_tracking_confidence = 0.5
 [display]
 show_preview = true
 
+[movement]
+left_max = 0.20
+right_min = 0.30
+up_max = 0.25
+down_min = 0.75
+smoothing_alpha = 0.5
+
+[actions]
+release_cooldown = 3
+
+[tracking]
+match_distance = 0.3
+max_lost = 8
+side_margin = 0.15
+side_dwell = 10
+
 [retroarch]
 path = "C:\\RetroArch-Win64\\retroarch.exe"
 core = "C:\\RetroArch-Win64\\cores\\mednafen_psx_libretro.dll"

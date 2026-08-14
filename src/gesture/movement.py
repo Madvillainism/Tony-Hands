@@ -20,14 +20,24 @@ DOWN_MIN = 0.75
 
 
 class MovementStateMachine:
-    def __init__(self):
+    def __init__(
+        self,
+        left_max: float = LEFT_MAX,
+        right_min: float = RIGHT_MIN,
+        up_max: float = UP_MAX,
+        down_min: float = DOWN_MIN,
+    ):
+        self.left_max = left_max
+        self.right_min = right_min
+        self.up_max = up_max
+        self.down_min = down_min
         self._hdir: HDir = HDir.NEUTRAL
         self._vdir: VDir = VDir.NEUTRAL
 
     def update(self, x: float, y: float) -> list[tuple[str, bool]]:
         events: list[tuple[str, bool]] = []
 
-        new_h = HDir.LEFT if x < LEFT_MAX else HDir.RIGHT if x > RIGHT_MIN else HDir.NEUTRAL
+        new_h = HDir.LEFT if x < self.left_max else HDir.RIGHT if x > self.right_min else HDir.NEUTRAL
 
         if new_h != self._hdir:
             if self._hdir != HDir.NEUTRAL:
@@ -36,7 +46,7 @@ class MovementStateMachine:
                 events.append((f"dpad_{new_h.value}", True))
             self._hdir = new_h
 
-        new_v = VDir.UP if y < UP_MAX else VDir.DOWN if y > DOWN_MIN else VDir.NEUTRAL
+        new_v = VDir.UP if y < self.up_max else VDir.DOWN if y > self.down_min else VDir.NEUTRAL
 
         if new_v != self._vdir:
             if self._vdir != VDir.NEUTRAL:

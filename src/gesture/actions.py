@@ -1,3 +1,4 @@
+import time
 from enum import Enum
 
 
@@ -22,6 +23,7 @@ class ActionStateMachine:
         self._state: ActionState | None = ActionState.IDLE
         self._release_cooldown = release_cooldown
         self._cooldown = 0
+        self.last_update_ms = 0.0
 
     def _resolve(self, gesture: str | None) -> ActionState | None:
         if gesture is None:
@@ -29,6 +31,7 @@ class ActionStateMachine:
         return GESTURE_TO_ACTION.get(gesture, ActionState.IDLE)
 
     def update(self, gesture: str | None) -> list[tuple[str, bool]]:
+        start = time.perf_counter()
         events: list[tuple[str, bool]] = []
         target = self._resolve(gesture)
 
@@ -50,8 +53,17 @@ class ActionStateMachine:
             events.append((target.value, True))
 
         self._state = target
+        self.last_update_ms = (time.perf_counter() - start) * 1000
         return events
 
     @property
     def state(self) -> ActionState:
         return self._state or ActionState.IDLE
+
+    @property
+    def cooldown_left(self) -> int:
+        return self._cooldown
+
+    @property
+    def cooldown_total(self) -> int:
+        return self._release_cooldown

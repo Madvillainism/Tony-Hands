@@ -49,16 +49,42 @@ min_tracking_confidence = 0.5
 [display]
 show_preview = true  # set false to hide preview window
 
+[movement]
+left_max = 0.20           # NEUTRAL→LEFT threshold (X)
+right_min = 0.30          # NEUTRAL→RIGHT threshold (X)
+up_max = 0.25             # NEUTRAL→UP threshold (Y)
+down_min = 0.75           # NEUTRAL→DOWN threshold (Y)
+smoothing_alpha = 0.5     # EMA smoothing on palm center (1 = none, 0 = maximum smoothing)
+
+[actions]
+release_cooldown = 3      # frames to ignore new presses after a release (anti-flicker)
+
+[tracking]
+match_distance = 0.3      # max distance (normalized) to match a hand to its track
+max_lost = 8              # frames a track survives after the hand disappears
+side_margin = 0.15        # how far past the midline before a side can flip
+side_dwell = 10           # consecutive frames past the margin required to flip side
+
 [retroarch]
 path = "C:\\RetroArch-Win64\\retroarch.exe"
 core = "C:\\RetroArch-Win64\\cores\\mednafen_psx_libretro.dll"
 rom = "C:\\RetroArch-Win64\\downloads\\Tony Hawk's Pro Skater (USA).cue"
 ```
 
-### Lowering resolution
+CLI flags override config values: `--camera`, `--width`, `--height`, and
+`--no-preview` take precedence over the TOML file.
 
-If you experience low FPS, reduce `width` and `height` (e.g., 320 × 240).
-The pipeline also prints a warning when FPS drops below 20.
+## Performance management
+
+The pipeline self-tunes to stay within the 33ms/frame latency budget:
+
+- **Stage timings** — the overlay shows per-stage millisecond averages for
+  capture (`C:`), inference (`I:`), bridge/key injection (`B:`), overlay
+  (`O:`) plus the loop total and the action-state transition time
+  (`act:`). The total is color-coded against the 33ms budget.
+- **Economy mode** — if FPS stays below 20 for 2 consecutive seconds, the
+  pipeline automatically drops to half-resolution inference (marked `[ECO]`
+  on the overlay) and restores full resolution 3 seconds after recovery.
 
 ---
 
@@ -129,8 +155,9 @@ Press **ESC** on the preview window to stop.
 
 ```
 src/
-├── main.py                    # Entry point — wires everything together
-├── pipeline.py                # Main loop, overlay, RetroArch focus
+├── main.py                    # Entry point — loads config, wires everything
+├── config.py                  # Settings loader (tomllib) + CLI overrides
+├── pipeline.py                # Main loop, overlay, RetroArch focus, economy mode
 ├── bridge/
 │   ├── input_bridge.py        # Routes gesture state → keyboard events
 │   └── key_mapper.py          # Action name → pynput Key/KeyCode
@@ -139,8 +166,9 @@ src/
 ├── gesture/
 │   ├── movement.py            # MovementStateMachine (X + Y zones)
 │   └── actions.py             # ActionStateMachine (gesture → button)
-└── inference/
-    └── mediapipe_hands.py     # MediaPipe HandLandmarker + gesture classification
+├── inference/
+│   ├── hand_tracker.py        # Identity tracking + sticky side assignment
+│   └── mediapipe_hands.py     # MediaPipe HandLandmarker + palm center + EMA + gestures
 ```
 
 ### Data flow
@@ -156,11 +184,20 @@ Webcam ──→ InferenceWorker ──→ GestureState ──→ InputBridge �
 
 1. **`WebcamThread`** captures frames on a background thread.
 2. **`InferenceWorker.process()`** runs MediaPipe HandLandmarker and returns
-   a `GestureState` containing wrist positions and classified gestures.
+   a `GestureState` containing smoothed palm-center positions (centroid of
+   landmarks `[0, 5, 9, 13, 17]`), the full 21-point landmark lists, and
+   classified gestures. **`HandTracker`** matches hands across frames by
+   palm-center distance so each hand keeps a stable identity (no order-flip
+   jitter), and assigns each a **sticky side** (`left`/`right`) that only
+   changes after a sustained crossing of the midline (`side_margin` /
+   `side_dwell` in `config.toml`). Palm positions are smoothed with an
+   exponential moving average (`smoothing_alpha`).
 3. **`Pipeline.run()`** draws the overlay, then sends the state to `InputBridge`.
-4. **`InputBridge.process()`** routes hands by X position:
-   - Left half → `MovementStateMachine.update(x, y)` → D-Pad events.
-   - Right half → `ActionStateMachine.update(gesture)` → action button events.
+4. **`InputBridge.process()`** routes hands by their **tracked side**, not
+   instantaneous X position — so a right hand crossing the midline can never
+   take over the D-Pad:
+   - Left-side hand → `MovementStateMachine.update(x, y)` → D-Pad events.
+   - Right-side hand → `ActionStateMachine.update(gesture)` → action button events.
 5. Events are dispatched via **`pynput.Controller.press()/release()`** which
    uses `SendInput` for reliable injection into RetroArch (SDL ignores
    `PostMessage` / `WM_KEYDOWN`).
@@ -172,7 +209,7 @@ Webcam ──→ InferenceWorker ──→ GestureState ──→ InputBridge �
 `_classify_gesture()` in `mediapipe_hands.py` checks in priority order:
 
 ```
-peace sign  →  L shape  →  open palm  →  fist
+peace sign  →  L shape  →  thumbs up  →  open palm  →  fist
 ```
 
 Each uses Y-coordinate comparison of finger tips vs. MCP joints:
@@ -189,11 +226,12 @@ pressing the new one).
 
 ### Movement zones
 
-`MovementStateMachine` in `movement.py` tracks X and Y independently:
+`MovementStateMachine` in `movement.py` tracks X and Y independently.
+Thresholds are read from `config.toml` `[movement]` (defaults shown):
 
 | Axis | Left/Up zone | Neutral | Right/Down zone |
 |------|-------------|---------|-----------------|
-| X | `x < 0.18` (LEFT) | `0.18–0.32` | `x > 0.32` (RIGHT) |
+| X | `x < 0.20` (LEFT) | `0.20–0.30` | `x > 0.30` (RIGHT) |
 | Y | `y < 0.25` (UP) | `0.25–0.75` | `y > 0.75` (DOWN) |
 
 Both axes emit independent D-Pad events each frame, supporting diagonals.
@@ -248,3 +286,5 @@ that competes for focus.
 - Reduce camera resolution in `config.toml`.
 - Disable the preview window with `-NoPreview`.
 - Close other GPU-intensive applications.
+- The pipeline automatically enters *economy mode* (half-res inference) when
+  FPS stays below 20 for 2 seconds — watch the overlay for the `[ECO]` flag.

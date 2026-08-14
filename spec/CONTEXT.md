@@ -19,31 +19,42 @@ Pipeline stages (each must complete within its budget):
 - One `InputBridge` serializes pynput key events.
 - Shared state via `collections.deque(maxlen=1)` — always process the *latest* frame, never queue backlog.
 
-## Ollie Physics Quirk (THPS PS1)
-The jump (ollie) detection is driven by the Right Hand spatial relationship:
+## Action Buttons (THPS PS1)
+Right-hand gestures map to face buttons:
 
-    ΔY = y_wrist − y_index
+| Gesture                          | Button     | THPS Action      |
+|----------------------------------|------------|------------------|
+| Open palm (2+ fingers extended)  | Cross      | Ollie / jump     |
+| Thumbs up (thumb out, others curled) | Circle | Trick / grab     |
+| Peace sign (index + middle up)   | Triangle   | Special / camera |
+| L shape (thumb + index out)      | Square     | Manual / grind   |
+| Fist (all fingers curled)        | —          | Release / no input |
 
-- ΔY > THRESHOLD_UP  → Ollie / Jump (press X)
-- ΔY < THRESHOLD_DOWN → Release X
-- Dead zone in between → hold previous state
+Gesture classification priority: `peace → l_shape → thumbs_up → palm → fist`.
 
-This inverts the intuitive mapping: raising the hand (wrist above index) issues the jump command, lowering releases it.
-The threshold values (in normalized MediaPipe coordinates, 0–1) are:
-- THRESHOLD_UP   = 0.04
-- THRESHOLD_DOWN = −0.02
-
-These must be empirically tuned per camera setup but START here.
+A **3-frame release cooldown** blocks new presses immediately after a release. This prevents
+the 1–2 frame gesture flicker that occurs when a hand transitions between poses from
+triggering unwanted buttons.
 
 ## Handedness Convention
-- Left Hand  → Skater movement (Left/Right on D-Pad)
-- Right Hand → Ollie/Jump (X button, held duration = jump height)
+- Left Hand  → Skater movement (D-Pad, both axes)
+- Right Hand → Action buttons (gesture-based)
 
-## Deadzone Specification (Left Hand X-axis)
-The horizontal position of the Left Hand's wrist landmark (landmark 0) in the normalized frame [0,1] maps to:
-- [0.00, 0.35] → Left D-Pad (hold)
-- [0.35, 0.65] → Deadzone (no input)
-- [0.65, 1.00] → Right D-Pad (hold)
+## Deadzone Specification (Left Hand)
+Position is measured from the **palm center** (centroid of landmarks `[0, 5, 9, 13, 17]`),
+not the wrist.
+
+Horizontal X (normalized [0,1], left half of frame):
+- `x < 0.20` → Left D-Pad (hold)
+- `0.20 – 0.30` → Deadzone (no input)
+- `x > 0.30` → Right D-Pad (hold)
+
+Vertical Y (normalized [0,1]):
+- `y < 0.25` → Up D-Pad (hold)
+- `0.25 – 0.75` → Deadzone (no input)
+- `y > 0.75` → Down D-Pad (hold)
+
+Both axes are independent, so diagonal D-Pad inputs (e.g., Up+Left) are supported.
 
 ## File Structure Governance
 All feature specs live under `spec/features/NNN-name/`.

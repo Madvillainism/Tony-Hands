@@ -11,6 +11,8 @@ from mediapipe.tasks.python.vision.hand_landmarker import (
     HandLandmarkerOptions,
 )
 
+from src.inference.hand_tracker import HandTracker
+
 
 MCP_INDICES = [5, 9, 13, 17]
 TIP_INDICES = [8, 12, 16, 20]
@@ -22,7 +24,8 @@ PALM_INDICES = [0, 5, 9, 13, 17]
 @dataclass
 class GestureState:
     timestamp: float = 0.0
-    hands: list[tuple[float, float, str | None]] = field(default_factory=list)
+    hands: list[tuple[float, float, str | None, str]] = field(default_factory=list)
+    landmarks: list[list[tuple[float, float]]] = field(default_factory=list)
     fps: float = 0.0
 
 
@@ -95,6 +98,11 @@ class InferenceWorker:
         num_hands: int = 2,
         min_detection_confidence: float = 0.7,
         min_tracking_confidence: float = 0.5,
+        smoothing_alpha: float = 0.5,
+        match_distance: float = 0.3,
+        max_lost: int = 8,
+        side_margin: float = 0.15,
+        side_dwell: int = 10,
     ):
         options = HandLandmarkerOptions(
             base_options=BaseOptions(model_asset_path=model_path),
@@ -107,6 +115,14 @@ class InferenceWorker:
         self._landmarker = HandLandmarker.create_from_options(options)
         self._fps_history: list[float] = []
         self._last_tick = time.perf_counter()
+        self._tracker = HandTracker(
+            smoothing_alpha=smoothing_alpha,
+            max_tracks=num_hands,
+            match_distance=match_distance,
+            max_lost=max_lost,
+            side_margin=side_margin,
+            side_dwell=side_dwell,
+        )
 
     @property
     def fps(self) -> float:
@@ -128,12 +144,21 @@ class InferenceWorker:
 
         state = GestureState(timestamp=tick, fps=self.fps)
 
+        detected = []
         if result.hand_landmarks:
             for hand_lms in result.hand_landmarks:
                 cx = sum(hand_lms[i].x for i in PALM_INDICES) / len(PALM_INDICES)
                 cy = sum(hand_lms[i].y for i in PALM_INDICES) / len(PALM_INDICES)
-                gesture = _classify_gesture(hand_lms)
-                state.hands.append((cx, cy, gesture))
+                detected.append((cx, cy, hand_lms))
+
+        self._tracker.update(detected)
+
+        for track in self._tracker.tracks:
+            if track.lost > 0:
+                continue
+            gesture = _classify_gesture(track.last_landmarks)
+            state.hands.append((track.sx, track.sy, gesture, track.side))
+            state.landmarks.append([(l.x, l.y) for l in track.last_landmarks])
 
         return state
 
