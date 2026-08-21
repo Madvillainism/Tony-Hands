@@ -27,12 +27,18 @@ class MovementSettings:
     right_min: float = 0.30
     up_max: float = 0.25
     down_min: float = 0.75
+    hysteresis: float = 0.05
     smoothing_alpha: float = 0.5
 
 
 @dataclass
 class ActionSettings:
     release_cooldown: int = 3
+    release_cooldown_ms: float = 90.0
+    stable_frames: int = 2
+    r2_cooldown_ms: float = 250.0
+    r2_stable_frames: int = 2
+    r2_hold_ms: float = 120.0
 
 
 @dataclass

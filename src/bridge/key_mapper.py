@@ -13,4 +13,5 @@ RETROARCH_KEYS: dict[str, Key | KeyCode] = {
     "select": Key.shift_r,
     "l1": KeyCode.from_vk(0x51),
     "r1": KeyCode.from_vk(0x57),
+    "r2": KeyCode.from_vk(0x45),
 }

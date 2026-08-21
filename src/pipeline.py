@@ -167,10 +167,10 @@ class Pipeline:
             if img is None:
                 return icons
             crops = {
-                "triangle": img[25:93, 95:163],
+                "triangle": img[98:167, 12:81],
                 "circle": img[100:167, 177:244],
                 "cross": img[172:240, 93:161],
-                "square": img[98:167, 12:81],
+                "square": img[25:93, 95:163],
             }
             for name, crop in crops.items():
                 icons[name] = cv2.resize(crop, (48, 48), interpolation=cv2.INTER_AREA)
@@ -279,6 +279,19 @@ class Pipeline:
 
         cv2.line(frame, (left_x, 0), (left_x, h), (100, 100, 100), 1)
         cv2.line(frame, (right_x, 0), (right_x, h), (100, 100, 100), 1)
+        # Hysteresis exit thresholds — dimmer dashed effect (drawn as sparse dots)
+        hyst = zones.get("hysteresis", 0)
+        if hyst > 0:
+            left_exit_x = int((zones["left_max"] + hyst) * w)
+            right_exit_x = int((zones["right_min"] - hyst) * w)
+            for yy in range(0, h, 10):
+                cv2.circle(frame, (left_exit_x, yy), 1, (60, 60, 60), -1)
+                cv2.circle(frame, (right_exit_x, yy), 1, (60, 60, 60), -1)
+            up_exit_y = int((zones["up_max"] + hyst) * h)
+            down_exit_y = int((zones["down_min"] - hyst) * h)
+            for xx in range(0, half_x, 10):
+                cv2.circle(frame, (xx, up_exit_y), 1, (60, 60, 60), -1)
+                cv2.circle(frame, (xx, down_exit_y), 1, (60, 60, 60), -1)
 
         cv2.putText(
             frame, "U", (4, up_y - 6),
@@ -316,6 +329,34 @@ class Pipeline:
                     frame, label, (px + 14, py + 4),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2,
                 )
+                # Left-hand R2 tap — point (index only) flashes cyan
+                if self._bridge.r2_is_held:
+                    self._draw_press_indicator(
+                        frame, (px, py), True, 0, 0,
+                    )
+                    cv2.circle(frame, (px, py), 16, (255, 255, 0), 2)
+                    cv2.putText(
+                        frame, "R2 TAP", (px + 14, py + 24),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2,
+                    )
+                elif gesture == "point":
+                    # Point detected but not yet held (arming/cooldown) — show intent
+                    cv2.circle(frame, (px, py), 14, (200, 200, 0), 1)
+                    cv2.putText(
+                        frame, "R2...", (px + 14, py + 24),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 0), 1,
+                    )
+                elif self._bridge.r2_cooldown_left > 0:
+                    self._draw_press_indicator(
+                        frame, (px, py), False,
+                        self._bridge.r2_cooldown_left,
+                        self._bridge.r2_cooldown_total,
+                    )
+                # Always show live gesture label even when idle
+                cv2.putText(
+                    frame, gesture if gesture else "NONE", (px + 14, py + 36),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1,
+                )
             else:
                 button_name = {
                     "palm": "cross",
@@ -349,7 +390,7 @@ class Pipeline:
         cv2.rectangle(frame, (0, h - 40), (w, h), (0, 0, 0), -1)
         cv2.putText(
             frame,
-            "L HALF = MOVE (L/N/R + U/D)  |  R HALF = palm=Cross  thumbs=Circle  peace=Triangle  L=Square",
+            "L: MOVE (L/N/R+U/D) point=R2 TAP  |  R: palm=Cross thumbs=Circle peace=Triangle L=Square",
             (10, h - 10),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1,
+            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1,
         )

@@ -72,6 +72,15 @@ def _is_thumbs_up(landmarks: list) -> bool:
     )
 
 
+def _is_point(landmarks: list) -> bool:
+    return (
+        _is_finger_extended(landmarks, 8, 5)
+        and _is_finger_curled(landmarks, 12, 9)
+        and _is_finger_curled(landmarks, 16, 13)
+        and _is_finger_curled(landmarks, 20, 17)
+    )
+
+
 def _is_open_palm(landmarks: list) -> bool:
     return sum(
         _is_finger_extended(landmarks, tip_idx, mcp_idx)
@@ -86,6 +95,8 @@ def _classify_gesture(landmarks: list) -> str:
         return "l_shape"
     if _is_thumbs_up(landmarks):
         return "thumbs_up"
+    if _is_point(landmarks):
+        return "point"
     if _is_open_palm(landmarks):
         return "palm"
     return "fist"

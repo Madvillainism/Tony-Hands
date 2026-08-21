@@ -76,7 +76,13 @@ def main() -> None:
         movement_right_min=settings.movement.right_min,
         movement_up_max=settings.movement.up_max,
         movement_down_min=settings.movement.down_min,
+        movement_hysteresis=settings.movement.hysteresis,
         actions_release_cooldown=settings.actions.release_cooldown,
+        actions_release_cooldown_ms=settings.actions.release_cooldown_ms,
+        actions_stable_frames=settings.actions.stable_frames,
+        actions_r2_cooldown_ms=settings.actions.r2_cooldown_ms,
+        actions_r2_stable_frames=settings.actions.r2_stable_frames,
+        actions_r2_hold_ms=settings.actions.r2_hold_ms,
     )
     pipeline = Pipeline(
         webcam=webcam,

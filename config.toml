@@ -15,10 +15,16 @@ left_max = 0.20
 right_min = 0.30
 up_max = 0.25
 down_min = 0.75
+hysteresis = 0.05
 smoothing_alpha = 0.5
 
 [actions]
 release_cooldown = 3
+release_cooldown_ms = 90.0
+stable_frames = 2
+r2_cooldown_ms = 250.0
+r2_stable_frames = 2
+r2_hold_ms = 120.0
 
 [tracking]
 match_distance = 0.3
