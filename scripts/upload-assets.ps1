@@ -1,3 +1,6 @@
+[CmdletBinding()]
+param([switch]$Force)
+
 # Upload the game files to a public Cloudflare R2 bucket.
 #
 # Credentials are read from environment variables (or scripts/deploy.env, which
@@ -13,7 +16,9 @@
 # Usage (from the repo root):
 #   powershell -File scripts/upload-assets.ps1
 
-$ErrorActionPreference = "Stop"
+# Native AWS CLI stderr must not be treated as terminating errors: a
+# bucket-scoped token cannot call admin APIs like GetBucketVersioning.
+$ErrorActionPreference = "Continue"
 
 # Load scripts/deploy.env if present, without ever echoing values.
 $envFile = Join-Path $PSScriptRoot "deploy.env"
@@ -58,20 +63,28 @@ foreach ($file in @($rom, $bios)) {
 # --- Guardrails: keep the bucket inside the free tier -------------------
 $expected = @("thps.bin", "scph5501.bin")
 
-$versioning = aws s3api get-bucket-versioning --bucket $bucket --endpoint-url $endpoint --output json 2>$null | ConvertFrom-Json
-if ($versioning.Status -eq "Enabled") {
-  Write-Error "Bucket versioning is enabled: old versions would keep consuming storage. Disable it before uploading."
-  exit 1
+$versioningRaw = aws s3api get-bucket-versioning --bucket $bucket --endpoint-url $endpoint --output json 2>$null
+if ($LASTEXITCODE -eq 0 -and $versioningRaw) {
+  $versioning = $versioningRaw | ConvertFrom-Json
+  if ($versioning.Status -eq "Enabled") {
+    Write-Error "Bucket versioning is enabled: old versions would keep consuming storage. Disable it before uploading."
+    exit 1
+  }
 }
 
 $existingRaw = aws s3api list-objects-v2 --bucket $bucket --endpoint-url $endpoint --output json 2>$null
 if ($LASTEXITCODE -eq 0 -and $existingRaw) {
-  $existing = ($existingRaw | ConvertFrom-Json).Contents | ForEach-Object { $_.Key }
-  $extra = @($existing | Where-Object { $_ -notin $expected })
+  $parsed = $existingRaw | ConvertFrom-Json
+  $existing = @()
+  if ($parsed.Contents) { $existing = @($parsed.Contents | ForEach-Object { $_.Key }) }
+  $extra = @($existing | Where-Object { $_ -and $_ -notin $expected })
   if ($extra.Count -gt 0) {
-    Write-Warning "Unexpected keys already in bucket: $($extra -join ', ')"
-    $answer = Read-Host "Upload anyway? These may add storage costs [y/N]"
-    if ($answer -notmatch '^[Yy]$') { Write-Error "Aborted by user."; exit 1 }
+    if ($Force) {
+      Write-Warning "Proceeding with unexpected keys in bucket: $($extra -join ', ')"
+    } else {
+      Write-Error "Unexpected keys already in bucket: $($extra -join ', '). Re-run with -Force to allow them."
+      exit 1
+    }
   }
 }
 
