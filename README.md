@@ -431,8 +431,9 @@ python -m http.server 8000 --directory web
 ```
 
 Open <http://localhost:8000> to play. The first load downloads the EmulatorJS
-runtime and the MediaPipe hand model; the ~600 MB disc image and the BIOS are
-read from `web/games/` on your machine and are never uploaded.
+runtime and the MediaPipe hand model. For local play, supply your own disc image
+and BIOS in `web/games/` (see [web/games/README.md](web/games/README.md)). The
+public site instead streams those files from its own asset host.
 
 The camera API requires a secure context, so `localhost` or HTTPS is mandatory —
 opening `index.html` from disk will not work. For a quick gesture check without

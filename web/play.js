@@ -1,21 +1,19 @@
-// Play page controller: files, emulator, gesture engine, input bridge, mode
-// switch. The emulator owns gameplay; this module owns the handoff.
+// Play page controller: boot, gesture engine, input bridge, mode switch.
+// The emulator owns gameplay; this module owns the handoff.
 
-import { DEFAULT_CORE, DEPLOY, GAME, STORAGE_KEYS, TRACKING, ZONES } from "./config.js";
+import { DEPLOY, STORAGE_KEYS, TRACKING, ZONES } from "./config.js";
 import { GestureEngine } from "./gesture-engine.js";
 import { ACTION_LABELS, PadBridge } from "./bridge.js";
 import {
   bootEmulator,
   checkGameFiles,
   getGameManager,
-  resolveCore,
 } from "./emulator.js";
 import { drawOverlay } from "./overlay.js";
 import { wireTrickSheet } from "./dialog.js";
 
 const els = {
   boot: document.getElementById("boot"),
-  recheck: document.getElementById("recheck"),
   release: document.getElementById("release"),
   gate: document.getElementById("gate"),
   gateTitle: document.getElementById("gate-title"),
@@ -23,20 +21,14 @@ const els = {
   gateHint: document.getElementById("gate-hint"),
   statusText: document.getElementById("status-text"),
   lamp: document.querySelector("[data-lamp]"),
-  coreLabel: document.getElementById("core-label"),
   modeHint: document.getElementById("mode-hint"),
   cameraHint: document.getElementById("camera-hint"),
   preview: document.getElementById("preview"),
   previewOff: document.getElementById("preview-off"),
-  romPath: document.getElementById("rom-path"),
-  biosPath: document.getElementById("bios-path"),
-  romNote: document.getElementById("rom-note"),
-  biosNote: document.getElementById("bios-note"),
   chips: [...document.querySelectorAll(".chip[data-action]")],
   modeRadios: [...document.querySelectorAll('input[name="control-mode"]')],
   announcer: document.getElementById("announcer"),
   video: document.getElementById("camera"),
-  tricks: document.getElementById("tricks"),
 };
 
 const previewCtx = els.preview.getContext("2d");
@@ -56,7 +48,6 @@ const KEY_TO_ACTION = {
 
 const state = {
   mode: "gestures",
-  coreId: DEFAULT_CORE,
   filesReady: false,
   booted: false,
   engine: null,
@@ -88,14 +79,6 @@ function setStatus(kind, text) {
 function setModeHint(text, tone = "info") {
   els.modeHint.textContent = text;
   els.modeHint.dataset.tone = tone;
-}
-
-function formatBytes(bytes) {
-  if (!bytes) return "";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  const mb = bytes / (1024 * 1024);
-  return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${Math.round(mb)} MB`;
 }
 
 function renderChips() {
@@ -195,10 +178,6 @@ function readMode() {
   return DEPLOY.defaultMode;
 }
 
-function readCore() {
-  return DEFAULT_CORE;
-}
-
 function applyMode(mode, { activateCamera = false } = {}) {
   state.mode = mode;
   localStorage.setItem(STORAGE_KEYS.mode, mode);
@@ -219,65 +198,32 @@ function applyMode(mode, { activateCamera = false } = {}) {
   }
 }
 
-function applyCore(coreId) {
-  state.coreId = resolveCore(coreId).id;
-  localStorage.setItem(STORAGE_KEYS.core, state.coreId);
-  els.coreLabel.textContent = resolveCore(state.coreId).core;
-}
-
 // ------------------------------------------------------------------- files
 
-function paintFile(kind, result) {
-  const row = document.querySelector(`.files__row[data-file="${kind}"]`);
-  const note = kind === "rom" ? els.romNote : els.biosNote;
-  const mark = row?.querySelector(".files__state");
-
-  row?.classList.toggle("is-missing", !result.present);
-  row?.classList.toggle("is-ready", result.present);
-
-  if (mark) mark.textContent = result.present ? "✓" : "!";
-  note.textContent = result.present
-    ? formatBytes(result.bytes) || "found"
-    : result.unreachable
-      ? "unreadable"
-      : "missing";
-}
-
 async function refreshFiles() {
-  els.recheck.disabled = true;
   els.boot.disabled = true;
-  setStatus("busy", "Checking files");
-  els.gateHint.textContent = "Checking for the disc image and BIOS…";
+  setStatus("busy", "Loading");
+  els.gateHint.textContent = "Loading…";
 
   const result = await checkGameFiles();
   state.filesReady = result.ready;
-
-  paintFile("rom", result.rom);
-  paintFile("bios", result.bios);
-  applyCore(state.coreId);
 
   if (result.ready) {
     els.gateTitle.textContent = "Ready to ride";
     els.gateNote.textContent = DEPLOY.autoStart
       ? "Loading the game. Switch to Gestures any time to play with your hands."
-      : "The disc image and BIOS were found in web/games/. Nothing leaves this machine.";
-    els.gateHint.textContent = `${GAME.rom} · ${formatBytes(result.rom.bytes)}`;
+      : "Ready when you are.";
+    els.gateHint.textContent = "Ready";
     els.boot.disabled = state.booted;
     setStatus("idle", "Ready to boot");
   } else {
-    const missingBios = !result.bios.present;
-    els.gateTitle.textContent = missingBios && result.rom.present ? "Almost rolling" : "No board yet";
-    els.gateNote.textContent = result.rom.unreachable
-      ? "The page cannot read web/games/. Serve the folder over HTTP: python -m http.server 8000 --directory web"
-      : "Copy your own files into web/games/, then press check again. The README in that folder has the commands.";
-    els.gateHint.textContent = missingBios
-      ? `Missing ${GAME.bios}`
-      : `Missing ${GAME.rom}`;
+    els.gateTitle.textContent = "No board yet";
+    els.gateNote.textContent =
+      "The game is not available right now. Reload to try again.";
+    els.gateHint.textContent = "";
     els.boot.disabled = true;
-    setStatus("error", "Game files missing");
+    setStatus("error", "Game unavailable");
   }
-
-  els.recheck.disabled = false;
 
   // The deployed build boots on arrival; local dev waits for a button press.
   if (result.ready && DEPLOY.autoStart && !state.booted) bootGame();
@@ -297,7 +243,6 @@ function bootGame() {
     player: "#game",
     onGameStart: () => {
       setStatus("live", "Game running");
-      els.coreLabel.textContent = resolveCore(state.coreId).core;
       // The camera starts once the game is actually running, so the
       // permission prompt never covers the boot screen.
       if (state.mode === "gestures" && !state.engine?.running) startEngine();
@@ -311,7 +256,7 @@ function bootGame() {
       els.gateTitle.textContent = "Ready to ride";
       els.gateNote.textContent =
         "The emulator stopped. Boot again when you are ready.";
-      els.gateHint.textContent = GAME.rom;
+      els.gateHint.textContent = "";
     },
   }).catch((error) => {
     state.booted = false;
@@ -334,7 +279,6 @@ for (const radio of els.modeRadios) {
 }
 
 els.boot.addEventListener("click", bootGame);
-els.recheck.addEventListener("click", refreshFiles);
 els.release.addEventListener("click", () => {
   releaseEverything("Inputs released");
   setModeHint("All inputs released. Nothing is held down.");
@@ -370,8 +314,5 @@ window.addEventListener("pagehide", () => {
 // ------------------------------------------------------------------- start
 
 applyMode(readMode());
-applyCore(readCore());
-els.romPath.textContent = GAME.rom;
-els.biosPath.textContent = GAME.bios;
 drawPreview();
 refreshFiles();

@@ -6,7 +6,7 @@
     <title>Play — Tony-Hands</title>
     <meta
       name="description"
-      content="Play Tony Hawk's Pro Skater in the browser with hand gestures or the keyboard. Your own disc image and BIOS stay on your machine."
+      content="Play Tony Hawk's Pro Skater in the browser with hand gestures or the keyboard."
     />
     <meta name="color-scheme" content="dark" />
     <link
@@ -53,8 +53,7 @@
         <h1 class="hero__title">Skate <em>with your</em> hands</h1>
         <p class="hero__lede">
           Left hand steers, right hand lands tricks, or drop the camera and use
-          the keys. The disc image and BIOS load in this tab — nothing you
-          choose is ever uploaded.
+          the keys. Pick your stance and start skating.
         </p>
       </div>
     </header>
@@ -67,9 +66,8 @@
           <div class="cab__bar">
             <p class="cab__rec">
               <span class="cab__dot" data-lamp aria-hidden="true"></span>
-              <span id="status-text">Checking files</span>
+              <span id="status-text">Loading</span>
             </p>
-            <p class="cab__core" id="core-label">pcsx_rearmed</p>
           </div>
 
           <div class="cab__screen">
@@ -79,14 +77,13 @@
               <p class="gate__kicker">Now loading</p>
               <p class="gate__title" id="gate-title">Load your board</p>
               <p class="gate__note" id="gate-note">
-                Both files must sit in <code>web/games/</code>. Nothing is
-                uploaded, and nothing is committed to git.
+                Getting the board ready.
               </p>
               <button class="btn btn--primary btn--big" id="boot" type="button" disabled>
                 Boot the game
               </button>
               <p class="gate__hint" id="gate-hint">
-                Checking for the disc image and BIOS…
+                Loading…
               </p>
             </div>
 
@@ -154,40 +151,6 @@
             </p>
           </section>
 
-          <section class="card">
-            <h2 class="card__title">Files</h2>
-            <ul class="files" id="files">
-              <li class="files__row" data-file="rom">
-                <span class="files__state" aria-hidden="true">…</span>
-                <span class="files__body">
-                  <span class="files__name">Disc image</span>
-                  <code class="files__path" id="rom-path">games/thps.bin</code>
-                </span>
-                <span class="files__note" id="rom-note">checking</span>
-              </li>
-              <li class="files__row" data-file="bios">
-                <span class="files__state" aria-hidden="true">…</span>
-                <span class="files__body">
-                  <span class="files__name">PS1 BIOS</span>
-                  <code class="files__path" id="bios-path">games/scph5501.bin</code>
-                </span>
-                <span class="files__note" id="bios-note">checking</span>
-              </li>
-            </ul>
-            <div class="card__row">
-              <button class="btn btn--ghost" id="recheck" type="button">
-                Check again
-              </button>
-            </div>
-          </section>
-
-          <section class="card">
-            <h2 class="card__title">Core</h2>
-            <p class="card__hint">
-              <code>pcsx_rearmed</code> — single-threaded, leaves the CPU free for
-              hand tracking.
-            </p>
-          </section>
         </aside>
       </section>
 
@@ -229,36 +192,14 @@
         </p>
       </section>
 
-      <section class="setup-notes" aria-labelledby="notes-title">
-        <h2 class="section-title" id="notes-title">
-          <span class="section-title__num">03</span> First time here?
+      <section class="setup-notes" aria-labelledby="source-title">
+        <h2 class="section-title" id="source-title">
+          <span class="section-title__num">03</span> Built in public
         </h2>
-        <div class="notes">
-          <article class="note">
-            <h3>Formats that work</h3>
-            <p>
-              A single <code>.bin</code>, <code>.iso</code> or <code>.chd</code>.
-              If your rip is a <code>.cue</code> plus <code>.bin</code>, copy the
-              <code>.bin</code>: the player reads it directly.
-            </p>
-          </article>
-          <article class="note">
-            <h3>Which BIOS</h3>
-            <p>
-              <code>scph5501.bin</code> for North America,
-              <code>scph5502.bin</code> for Europe,
-              <code>scph5500.bin</code> for Japan. RetroArch's
-              <code>system</code> folder usually has one.
-            </p>
-          </article>
-          <article class="note">
-            <h3>Nothing is uploaded</h3>
-            <p>
-              The emulator runs in this tab. The repository never contains the
-              disc image or BIOS, and no file you choose is sent anywhere.
-            </p>
-          </article>
-        </div>
+        <p>
+          <a class="btn btn--ghost" href="https://github.com/Madvillainism/Tony-Hands"
+             rel="noopener noreferrer">See the source ↗</a>
+        </p>
       </section>
     </main>
 
@@ -272,7 +213,7 @@
       </p>
       <p>
         An homage to late-90s skate games. Not affiliated with Activision or
-        Neversoft, and it ships no game data.
+        Neversoft.
         <a href="https://github.com/Madvillainism/Tony-Hands">Source on GitHub</a>.
       </p>
     </footer>
@@ -355,8 +296,7 @@
               hysteresis band so the edge of a zone cannot flicker.
             </p>
             <p class="sheet__text">
-              Values match <code>config.toml</code>. Anything tuned on the desktop
-              behaves identically here.
+              Move deliberately between zones to avoid accidental turns.
             </p>
           </section>
         </div>

@@ -741,77 +741,6 @@ body[data-status="live"] .cab__scanlines {
   display: none;
 }
 
-/* ------------------------------------------------------------------ files */
-
-.files {
-  display: grid;
-  gap: 0.6rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.files__row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.45rem 0.5rem;
-  border: 1px solid rgba(246, 241, 227, 0.14);
-  background: rgba(246, 241, 227, 0.03);
-}
-
-.files__state {
-  display: grid;
-  place-items: center;
-  inline-size: 1.35rem;
-  block-size: 1.35rem;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-weight: 700;
-  border: var(--line) solid rgba(246, 241, 227, 0.3);
-  color: var(--bone-dim);
-}
-
-.files__row.is-ready .files__state {
-  background: var(--green);
-  border-color: var(--ink);
-  color: var(--ink);
-}
-
-.files__row.is-missing .files__state {
-  background: var(--orange);
-  border-color: var(--ink);
-  color: var(--ink);
-}
-
-.files__body {
-  display: grid;
-  gap: 0.05rem;
-  min-inline-size: 0;
-}
-
-.files__name {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--bone-dim);
-}
-
-.files__path {
-  font-size: 0.78rem;
-  color: var(--bone);
-  overflow-wrap: anywhere;
-}
-
-.files__note {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  color: var(--bone-dim);
-  text-align: end;
-}
-
 /* -------------------------------------------------------------- ride/notes */
 
 .ride,
@@ -884,34 +813,6 @@ body[data-status="live"] .cab__scanlines {
   margin: 1rem 0 0;
   font-size: 0.9rem;
   color: var(--bone-dim);
-}
-
-.notes {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: clamp(0.75rem, 1.5vw, 1.25rem);
-}
-
-.note {
-  padding: 0.9rem 1rem;
-  background: rgba(246, 241, 227, 0.04);
-  border-inline-start: 3px solid var(--orange);
-}
-
-.note h3 {
-  margin: 0 0 0.35rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--yellow);
-}
-
-.note p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--bone-dim);
-  text-wrap: pretty;
 }
 
 /* ------------------------------------------------------------------- demo */
