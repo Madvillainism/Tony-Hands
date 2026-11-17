@@ -36,12 +36,13 @@ export const CORES = Object.freeze([
 
 export const DEFAULT_CORE = "fast";
 
-// Mirrors [movement] in config.toml.
+// Vertical zones are tuned for the browser: the top/bottom third is enough
+// for Up/Down so a hand does not have to be raised to the edge of the frame.
 export const ZONES = Object.freeze({
   left_max: 0.2,
   right_min: 0.3,
-  up_max: 0.25,
-  down_min: 0.75,
+  up_max: 0.35,
+  down_min: 0.65,
   hysteresis: 0.05,
 });
 

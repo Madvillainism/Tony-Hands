@@ -203,8 +203,8 @@ export class MovementStateMachine {
   constructor({
     leftMax = 0.2,
     rightMin = 0.3,
-    upMax = 0.25,
-    downMin = 0.75,
+    upMax = 0.35,
+    downMin = 0.65,
     hysteresis = 0.05,
   } = {}) {
     this.leftMax = leftMax;

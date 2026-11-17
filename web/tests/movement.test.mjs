@@ -31,6 +31,16 @@ test("the neutral band is [left_max, right_min]", () => {
   assert.deepEqual(s.update(0.25, 0.5), []);
 });
 
+test("up/down trigger inside the top/bottom third, not at the frame edge", () => {
+  const up = new MovementStateMachine();
+  assert.ok(has(up.update(0.25, 0.3), "dpad_up", true));
+  const down = new MovementStateMachine();
+  assert.ok(has(down.update(0.25, 0.7), "dpad_down", true));
+  // Neutral band stays comfortable around mid-frame.
+  const neutral = new MovementStateMachine();
+  assert.deepEqual(neutral.update(0.25, 0.5), []);
+});
+
 test("diagonals emit two independent presses", () => {
   const s = new MovementStateMachine();
   const events = s.update(0.05, 0.05);

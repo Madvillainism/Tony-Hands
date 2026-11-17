@@ -100,12 +100,12 @@ test("keyNameToCode handles EJS key names", () => {
   assert.equal(keyNameToCode(""), null);
 });
 
-test("movement zones mirror config.toml", () => {
+test("vertical zones are tighter than the desktop defaults", () => {
   assert.deepEqual(ZONES, {
     left_max: 0.2,
     right_min: 0.3,
-    up_max: 0.25,
-    down_min: 0.75,
+    up_max: 0.35,
+    down_min: 0.65,
     hysteresis: 0.05,
   });
 });

@@ -134,6 +134,26 @@
 
         <aside class="rail" aria-label="Setup">
           <section class="card">
+            <h2 class="card__title">Camera</h2>
+            <div class="preview">
+              <canvas
+                id="preview"
+                width="640"
+                height="480"
+                role="img"
+                aria-label="Mirrored camera preview with movement zones and tracked hands."
+              ></canvas>
+              <p class="preview__off" id="preview-off">
+                Camera off. Switch to gestures to turn it on.
+              </p>
+            </div>
+            <p class="card__hint" id="camera-hint">
+              Runs at 320×240 while a game is on screen, to leave the emulator
+              the CPU.
+            </p>
+          </section>
+
+          <section class="card">
             <h2 class="card__title">Input</h2>
             <fieldset class="segmented">
               <legend class="visually-hidden">Control scheme</legend>
@@ -171,26 +191,6 @@
                 Release
               </button>
             </div>
-          </section>
-
-          <section class="card">
-            <h2 class="card__title">Camera</h2>
-            <div class="preview">
-              <canvas
-                id="preview"
-                width="640"
-                height="480"
-                role="img"
-                aria-label="Mirrored camera preview with movement zones and tracked hands."
-              ></canvas>
-              <p class="preview__off" id="preview-off">
-                Camera off. Switch to gestures to turn it on.
-              </p>
-            </div>
-            <p class="card__hint" id="camera-hint">
-              Runs at 320×240 while a game is on screen, to leave the emulator
-              the CPU.
-            </p>
           </section>
 
         </aside>
@@ -333,8 +333,8 @@
             <p class="sheet__text">
               The left half of the frame is a 3×3 pad: 20% from the left edge is
               <strong>left</strong>, 30% from the right edge is
-              <strong>right</strong>, the top quarter is <strong>up</strong> and
-              the bottom quarter is <strong>down</strong>. Each zone has a 5%
+              <strong>right</strong>, the top third is <strong>up</strong> and
+              the bottom third is <strong>down</strong>. Each zone has a 5%
               hysteresis band so the edge of a zone cannot flicker.
             </p>
             <p class="sheet__text">
