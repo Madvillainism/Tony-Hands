@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tony-Hands Web Demo — Hand gestures to PlayStation input</title>
+    <meta
+      name="description"
+      content="A browser demo of Tony-Hands: MediaPipe hand tracking turns one hand into a D-Pad and the other into PlayStation face buttons."
+    />
+    <meta name="color-scheme" content="dark" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230b1016'/%3E%3Cpath d='M18 66h64M28 84v-8M72 84v-8' stroke='%23ffd166' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="preconnect" href="https://storage.googleapis.com" crossorigin />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./main.js"></script>
+  </head>
+  <body>
+    <header class="masthead">
+      <p class="eyebrow">Tony-Hands</p>
+      <h1>Play Tony Hawk's Pro Skater with your hands</h1>
+      <p class="lede">
+        Your left hand steers, your right hand does tricks. This page runs
+        MediaPipe in your browser and shows exactly which inputs a real game
+        would receive. Nothing is recorded or uploaded.
+      </p>
+
+      <div class="toolbar">
+        <button id="start" class="button" type="button">Start camera</button>
+        <p id="status" class="status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="status-text">Camera off</span>
+        </p>
+      </div>
+
+      <p id="error" class="error" role="alert" hidden></p>
+    </header>
+
+    <main class="layout">
+      <section class="panel panel--stage" aria-labelledby="stage-heading">
+        <h2 id="stage-heading">Camera preview</h2>
+        <figure class="stage">
+          <canvas
+            id="stage"
+            width="640"
+            height="480"
+            role="img"
+            aria-label="Mirrored camera preview. Movement zones are drawn on the left half and action zones on the right half, with landmarks overlaid on each detected hand."
+          >
+            Your browser cannot display the camera preview.
+          </canvas>
+          <figcaption>
+            The image is mirrored like a selfie. Zone lines match
+            <code>config.toml</code> from the desktop app.
+          </figcaption>
+        </figure>
+      </section>
+
+      <section class="panel" aria-labelledby="readout-heading">
+        <h2 id="readout-heading">Detected input</h2>
+        <p class="hint">
+          A desktop game would receive these as keyboard presses.
+        </p>
+
+        <h3 class="group-heading">Movement — left hand</h3>
+        <ul class="chips" role="list">
+          <li><span class="chip" data-action="dpad_up"><span class="glyph" aria-hidden="true">↑</span>Up</span></li>
+          <li><span class="chip" data-action="dpad_down"><span class="glyph" aria-hidden="true">↓</span>Down</span></li>
+          <li><span class="chip" data-action="dpad_left"><span class="glyph" aria-hidden="true">←</span>Left</span></li>
+          <li><span class="chip" data-action="dpad_right"><span class="glyph" aria-hidden="true">→</span>Right</span></li>
+        </ul>
+
+        <h3 class="group-heading">Actions — right hand</h3>
+        <ul class="chips" role="list">
+          <li><span class="chip" data-action="cross"><span class="glyph" aria-hidden="true">✕</span>Cross</span></li>
+          <li><span class="chip" data-action="circle"><span class="glyph" aria-hidden="true">○</span>Circle</span></li>
+          <li><span class="chip" data-action="triangle"><span class="glyph" aria-hidden="true">△</span>Triangle</span></li>
+          <li><span class="chip" data-action="square"><span class="glyph" aria-hidden="true">□</span>Square</span></li>
+          <li><span class="chip" data-action="r2">R2</span></li>
+        </ul>
+
+        <h3 class="group-heading">Right now</h3>
+        <p id="summary" class="summary">Nothing pressed</p>
+        <p id="live" class="visually-hidden" role="status"></p>
+        <p id="hands" class="hint">No hands detected.</p>
+      </section>
+
+      <section class="panel panel--guide" aria-labelledby="guide-heading">
+        <h2 id="guide-heading">Gesture cheat-sheet</h2>
+        <dl class="gestures">
+          <div>
+            <dt>✋ Open palm</dt>
+            <dd>Cross · hold to crouch, close your hand to ollie</dd>
+          </div>
+          <div>
+            <dt>👍 Thumbs up</dt>
+            <dd>Circle</dd>
+          </div>
+          <div>
+            <dt>✌️ Peace sign</dt>
+            <dd>Triangle</dd>
+          </div>
+          <div>
+            <dt>🤘 L shape</dt>
+            <dd>Square</dd>
+          </div>
+          <div>
+            <dt>✊ Fist</dt>
+            <dd>Releases the held button</dd>
+          </div>
+          <div>
+            <dt>☝️ Point</dt>
+            <dd>R2 tap · left hand, 120&nbsp;ms press</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="panel" aria-labelledby="how-heading">
+        <h2 id="how-heading">How to try it</h2>
+        <ol class="steps">
+          <li>Press <strong>Start camera</strong> and allow camera access.</li>
+          <li>
+            Hold your left hand in the left half and move it to the edges to
+            press a direction. Point with the index finger for an R2 tap.
+          </li>
+          <li>
+            Show your right hand in the right half as a palm, thumbs up, peace
+            sign, or L shape. Make a fist to release.
+          </li>
+        </ol>
+        <p class="hint">
+          Keep your palm facing the camera, about 30–50&nbsp;cm away, in even
+          lighting.
+        </p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        Runs entirely on your device with
+        <a href="https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker">MediaPipe Hand Landmarker</a>.
+        The camera stream never leaves the browser.
+      </p>
+      <p>
+        <a href="https://github.com/Madvillainism/Tony-Hands">Source and desktop app on GitHub</a>
+      </p>
+    </footer>
+
+    <video
+      id="camera"
+      class="visually-hidden"
+      playsinline
+      muted
+      autoplay
+      aria-hidden="true"
+    ></video>
+
+    <noscript>
+      <p class="error">
+        This demo needs JavaScript to run hand tracking. The desktop app still
+        works without a browser.
+      </p>
+    </noscript>
+  </body>
+</html>

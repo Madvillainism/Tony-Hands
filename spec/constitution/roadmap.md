@@ -32,7 +32,7 @@
 - [ ] Virtual gamepad backend (ViGEm)
 
 ## Phase 4 — Web
-- [ ] Browser demo: MediaPipe WASM + Canvas, ported state machines
+- [x] Browser demo: MediaPipe WASM + Canvas, ported state machines
 - [ ] Playable in-browser via EmulatorJS
 - [ ] Browser-as-controller bridge (WebSocket → desktop app)
 - [ ] Deploy to GitHub Pages / Vercel with tutorial

@@ -1,0 +1,389 @@
+:root {
+  color-scheme: dark;
+
+  --bg: #0b1016;
+  --surface: #131b24;
+  --surface-raised: #1b2531;
+  --border: #2b3949;
+  --text: #e9eff6;
+  --muted: #a9b8c9;
+  --accent: #ffd166;
+  --accent-ink: #1a1206;
+  --focus: #8ed8ff;
+  --left: #ff9f43;
+  --right: #4dd0e1;
+  --danger: #ff8b8b;
+  --ok: #6ee7a8;
+
+  --radius: 14px;
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "Cascadia Mono", Consolas, monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  margin: 0 auto;
+  max-inline-size: 1180px;
+  padding: clamp(1rem, 4vw, 2.5rem);
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--text);
+  background: radial-gradient(
+      1200px 600px at 15% -10%,
+      rgb(77 208 225 / 12%),
+      transparent 60%
+    ),
+    var(--bg);
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+h1 {
+  margin: 0.35rem 0 0.75rem;
+  font-size: clamp(2rem, 1.4rem + 2.6vw, 3rem);
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+}
+
+h3 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+p {
+  margin: 0 0 0.85rem;
+}
+
+a {
+  color: var(--focus);
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: #c4ecff;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--surface-raised);
+}
+
+:where(a, button):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* ---------------------------------------------------------------- masthead */
+
+.masthead {
+  margin-block-end: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.lede {
+  max-inline-size: 68ch;
+  font-size: 1.0625rem;
+  color: var(--muted);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-block-start: 1.25rem;
+}
+
+.button {
+  min-block-size: 44px;
+  padding: 0.6rem 1.4rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 650;
+  color: var(--accent-ink);
+  background: var(--accent);
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease,
+    border-color 140ms ease;
+}
+
+.button:hover {
+  background: #ffdd8b;
+}
+
+.button[data-running="true"] {
+  color: var(--text);
+  background: transparent;
+  border-color: var(--border);
+}
+
+.button[data-running="true"]:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.button:disabled {
+  cursor: progress;
+  opacity: 0.65;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--muted);
+}
+
+.status-dot {
+  inline-size: 0.6rem;
+  block-size: 0.6rem;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.status[data-state="live"] .status-dot {
+  background: var(--ok);
+}
+
+.status[data-state="busy"] .status-dot {
+  background: var(--accent);
+}
+
+.status[data-state="error"] .status-dot {
+  background: var(--danger);
+}
+
+.status[data-state="off"] .status-dot {
+  background: var(--muted);
+}
+
+.error {
+  margin: 1rem 0 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--danger);
+  border-inline-start-width: 4px;
+  border-radius: 8px;
+  background: rgb(255 139 139 / 10%);
+  color: var(--text);
+}
+
+/* ------------------------------------------------------------------ layout */
+
+.layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+@media (max-width: 880px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.panel {
+  padding: clamp(1rem, 2vw, 1.35rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.panel--stage {
+  min-inline-size: 0;
+}
+
+/* ------------------------------------------------------------------- stage */
+
+.stage {
+  margin: 0;
+}
+
+.stage canvas {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  background: #05080b;
+}
+
+.stage figcaption {
+  margin-block-start: 0.7rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------------------- readout */
+
+.hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-block-size: 32px;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  background: var(--surface-raised);
+  transition: background-color 140ms ease, color 140ms ease,
+    border-color 140ms ease;
+}
+
+.chip .glyph {
+  font-size: 0.95em;
+  opacity: 0.85;
+}
+
+.chip.is-active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 650;
+}
+
+.chip.is-active .glyph {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .chip.is-active {
+    animation: chip-pop 180ms ease-out;
+  }
+}
+
+@keyframes chip-pop {
+  from {
+    transform: scale(0.94);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.summary {
+  margin: 0 0 0.5rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+/* ------------------------------------------------------------------ guide */
+
+.gestures {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+}
+
+.gestures > div {
+  display: grid;
+  gap: 0.1rem;
+  padding-block-end: 0.6rem;
+  border-block-end: 1px solid var(--border);
+}
+
+.gestures > div:last-child {
+  padding-block-end: 0;
+  border-block-end: 0;
+}
+
+.gestures dt {
+  font-weight: 650;
+}
+
+.gestures dd {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.steps {
+  margin: 0 0 0.85rem;
+  padding-inline-start: 1.15rem;
+}
+
+.steps li {
+  margin-block-end: 0.5rem;
+}
+
+/* ----------------------------------------------------------------- footer */
+
+.footer {
+  margin-block-start: 2rem;
+  padding-block-start: 1.25rem;
+  border-block-start: 1px solid var(--border);
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------------------- utilities */
+
+.visually-hidden:where(:not(:focus-within, :active)) {
+  position: absolute !important;
+  clip-path: inset(50%) !important;
+  overflow: hidden !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
