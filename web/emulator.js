@@ -57,11 +57,12 @@ let bootPromise = null;
  * @param {object} options
  * @param {string} options.player Selector for the container element.
  * @param {string} [options.coreId] Kept for API compatibility; pcsx_rearmed is the only core.
+ * @param {object} [options.controls] RetroPad table; EJS snapshots it at construction.
  * @param {(emulator: object) => void} [options.onGameStart]
  * @param {() => void} [options.onExit]
  * @returns {Promise<object>} the EJS_emulator instance
  */
-export function bootEmulator({ player, onGameStart, onExit }) {
+export function bootEmulator({ player, controls = DESKTOP_CONTROLS, onGameStart, onExit }) {
   if (bootPromise) return bootPromise;
 
   bootPromise = new Promise((resolve, reject) => {
@@ -75,7 +76,7 @@ export function bootEmulator({ player, onGameStart, onExit }) {
     // Threads need COOP/COEP headers, which a plain static server does not
     // send. Staying single-threaded keeps `python -m http.server` working.
     window.EJS_threads = false;
-    window.EJS_defaultControls = DESKTOP_CONTROLS;
+    window.EJS_defaultControls = controls;
     window.EJS_volume = 0.6;
     // Pin the language. EmulatorJS asks for the bare code from the browser
     // ("es"), but the CDN only publishes region variants ("es-ES"), so the

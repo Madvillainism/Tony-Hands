@@ -372,6 +372,7 @@ main,
 .cab__scanlines {
   position: absolute;
   inset: 0;
+  z-index: 1;
   pointer-events: none;
   background: repeating-linear-gradient(
     to bottom,
@@ -385,8 +386,65 @@ body[data-status="live"] .cab__scanlines {
   opacity: 0;
 }
 
+/* Gesture cheat-sheet over the game: centered horizontally, kept low so the
+   playfield stays visible. pointer-events:none leaves EJS focus untouched. */
+.gesture-hud {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(11, 11, 13, 0.82);
+  border-block-start: 2px solid var(--yellow);
+  text-align: center;
+  pointer-events: none;
+}
+
+.gesture-hud[hidden],
+body[data-mode="keyboard"] .gesture-hud {
+  display: none;
+}
+
+.gesture-hud__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--yellow);
+}
+
+.gesture-hud__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  max-inline-size: 34rem;
+}
+
+.gesture-hud__grid h3 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bone-dim);
+}
+
+.gesture-hud__grid p {
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--bone);
+}
+
+.chips--hud {
+  justify-content: center;
+}
+
 .gate {
   position: absolute;
+  z-index: 3;
   inset: 0;
   display: grid;
   align-content: center;
@@ -1205,6 +1263,46 @@ kbd {
   }
 }
 
+/* ------------------------------------------------------------ intro sheet */
+
+.intro__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.intro__demo {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 0.7rem 0.5rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-inline-start: 3px solid var(--orange);
+  text-align: center;
+}
+
+.intro__demo p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #3d3a33;
+}
+
+.intro__hand {
+  display: inline-block;
+  font-size: 2rem;
+  line-height: 1.2;
+  translate: 0;
+  scale: 1;
+  opacity: 1;
+}
+
+.intro__close {
+  margin-block-start: 1rem;
+}
+
 /* ------------------------------------------------------------- motion pref */
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1214,6 +1312,47 @@ kbd {
 
   .gate__title {
     animation: rise 320ms ease-out both;
+  }
+
+  /* Static by default; motion is opt-in. Scoped to [open] so closing the
+     dialog is the pause control — nothing animates offscreen. */
+  #gesture-intro[open] .intro__hand--tap {
+    animation: intro-pulse 1.2s ease-in-out infinite;
+  }
+
+  #gesture-intro[open] .intro__hand--slide {
+    animation: intro-slide 1.6s ease-in-out infinite;
+  }
+
+  #gesture-intro[open] .intro__hand--cycle {
+    animation: intro-pulse 1.4s ease-in-out infinite;
+  }
+
+  #gesture-intro[open] .intro__hand--fade {
+    animation: intro-fade 2s ease-in-out infinite;
+  }
+
+  #gesture-intro[open] .intro__hand--leave {
+    animation: intro-slide 1.8s ease-in-out infinite reverse;
+  }
+}
+
+@keyframes intro-pulse {
+  50% {
+    scale: 1.15;
+    opacity: 0.85;
+  }
+}
+
+@keyframes intro-slide {
+  50% {
+    translate: 24px 0;
+  }
+}
+
+@keyframes intro-fade {
+  50% {
+    opacity: 0;
   }
 }
 

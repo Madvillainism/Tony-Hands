@@ -1,16 +1,24 @@
 // Play page controller: boot, gesture engine, input bridge, mode switch.
 // The emulator owns gameplay; this module owns the handoff.
 
-import { DEPLOY, STORAGE_KEYS, TRACKING, ZONES } from "./config.js";
+import {
+  CONTROL_PRESETS,
+  DEFAULT_PRESET,
+  DEPLOY,
+  STORAGE_KEYS,
+  TRACKING,
+  ZONES,
+  keyNameToCode,
+} from "./config.js";
 import { GestureEngine } from "./gesture-engine.js";
-import { ACTION_LABELS, PadBridge } from "./bridge.js";
+import { ACTION_LABELS, PAD, PadBridge } from "./bridge.js";
 import {
   bootEmulator,
   checkGameFiles,
   getGameManager,
 } from "./emulator.js";
 import { drawOverlay } from "./overlay.js";
-import { wireTrickSheet } from "./dialog.js";
+import { wireDialogs } from "./dialog.js";
 
 const els = {
   boot: document.getElementById("boot"),
@@ -27,6 +35,9 @@ const els = {
   previewOff: document.getElementById("preview-off"),
   chips: [...document.querySelectorAll(".chip[data-action]")],
   modeRadios: [...document.querySelectorAll('input[name="control-mode"]')],
+  presetRadios: [...document.querySelectorAll('input[name="control-preset"]')],
+  reload: document.getElementById("reload"),
+  presetHint: document.getElementById("preset-hint"),
   announcer: document.getElementById("announcer"),
   video: document.getElementById("camera"),
 };
@@ -34,20 +45,21 @@ const els = {
 const previewCtx = els.preview.getContext("2d");
 
 // Keyboard chips are read-only decoration; the emulator handles the real keys.
-const KEY_TO_ACTION = {
-  KeyZ: "cross",
-  KeyX: "circle",
-  KeyS: "triangle",
-  KeyA: "square",
-  ArrowUp: "dpad_up",
-  ArrowDown: "dpad_down",
-  ArrowLeft: "dpad_left",
-  ArrowRight: "dpad_right",
-  KeyE: "r2",
-};
+// Derived from the active preset so the readout always matches the mapping.
+let keyToAction = deriveKeyMap(CONTROL_PRESETS[DEFAULT_PRESET].controls);
+
+function deriveKeyMap(controls) {
+  const map = {};
+  for (const [action, index] of Object.entries(PAD)) {
+    const code = keyNameToCode(controls[0]?.[index]?.value);
+    if (code) map[code] = action;
+  }
+  return map;
+}
 
 const state = {
   mode: "gestures",
+  preset: DEFAULT_PRESET,
   filesReady: false,
   booted: false,
   engine: null,
@@ -171,11 +183,47 @@ function releaseEverything(message) {
 // -------------------------------------------------------------------- mode
 
 function readMode() {
-  const stored = localStorage.getItem(STORAGE_KEYS.mode);
+  let stored = null;
+  try {
+    stored = localStorage.getItem(STORAGE_KEYS.mode);
+  } catch {
+    // Restricted storage: fall back to the deploy default.
+  }
   if (stored === "keyboard" || stored === "gestures") return stored;
   // No saved choice yet: keyboard-first on the deployed site so the camera
   // permission prompt does not fire on arrival; gestures locally.
   return DEPLOY.defaultMode;
+}
+
+function readPreset() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.controls);
+    if (stored && CONTROL_PRESETS[stored]) return stored;
+  } catch {
+    // Restricted storage: fall back to the default preset.
+  }
+  return DEFAULT_PRESET;
+}
+
+function applyPreset(id) {
+  state.preset = id;
+  keyToAction = deriveKeyMap(CONTROL_PRESETS[id].controls);
+  for (const radio of els.presetRadios) radio.checked = radio.value === id;
+  try {
+    localStorage.setItem(STORAGE_KEYS.controls, id);
+  } catch {
+    // Restricted storage: the choice lasts for this session only.
+  }
+  if (els.presetHint) els.presetHint.textContent = CONTROL_PRESETS[id].note;
+  // EJS snapshots controls when it boots; changing them later needs a reload.
+  if (els.reload) els.reload.hidden = !state.booted;
+  if (state.mode === "keyboard") {
+    setModeHint(
+      id === "skate"
+        ? "Keyboard — Skate: WASD to steer, I/J/K/L for tricks, O for R2."
+        : "Keyboard — Desktop: Z, X, S, A, arrows, Enter. Matches the desktop app.",
+    );
+  }
 }
 
 function applyMode(mode, { activateCamera = false } = {}) {
@@ -188,7 +236,9 @@ function applyMode(mode, { activateCamera = false } = {}) {
     releaseEverything();
     els.previewOff.hidden = false;
     setModeHint(
-      "Keyboard mode. Same layout as the desktop app: Z, X, S, A, arrows, Enter.",
+      state.preset === "skate"
+        ? "Keyboard — Skate: WASD to steer, I/J/K/L for tricks, O for R2."
+        : "Keyboard — Desktop: Z, X, S, A, arrows, Enter. Matches the desktop app.",
     );
     document.body.dataset.mode = "keyboard";
   } else {
@@ -241,6 +291,7 @@ function bootGame() {
 
   bootEmulator({
     player: "#game",
+    controls: CONTROL_PRESETS[state.preset].controls,
     onGameStart: () => {
       setStatus("live", "Game running");
       // The camera starts once the game is actually running, so the
@@ -269,14 +320,52 @@ function bootGame() {
   });
 }
 
+// ------------------------------------------------------------------ intro
+
+function showGestureIntro() {
+  const dialog = document.getElementById("gesture-intro");
+  if (!dialog) return;
+  let seen = false;
+  try {
+    seen = localStorage.getItem(STORAGE_KEYS.introSeen) === "1";
+  } catch {
+    // Restricted storage: show it once per session instead.
+  }
+  if (seen || dialog.open) return;
+
+  dialog.addEventListener(
+    "close",
+    () => {
+      try {
+        localStorage.setItem(STORAGE_KEYS.introSeen, "1");
+      } catch {
+        // Restricted storage: closing is still enough for this session.
+      }
+      dialog.returnValue = ""; // Esc and other dismissals set no value.
+    },
+    { once: true },
+  );
+  dialog.showModal();
+}
+
 // ------------------------------------------------------------------ wiring
 
 for (const radio of els.modeRadios) {
   radio.addEventListener("change", () => {
     if (!radio.checked) return;
+    // First time choosing Gestures: show the short animated introduction.
+    if (radio.value === "gestures") showGestureIntro();
     applyMode(radio.value, { activateCamera: true });
   });
 }
+
+for (const radio of els.presetRadios) {
+  radio.addEventListener("change", () => {
+    if (radio.checked) applyPreset(radio.value);
+  });
+}
+
+els.reload?.addEventListener("click", () => location.reload());
 
 els.boot.addEventListener("click", bootGame);
 els.release.addEventListener("click", () => {
@@ -287,20 +376,20 @@ els.release.addEventListener("click", () => {
 document.addEventListener("keydown", (event) => {
   if (state.mode !== "keyboard") return;
   if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
-  const action = KEY_TO_ACTION[event.code];
+  const action = keyToAction[event.code];
   if (!action) return;
   state.keyboardHeld.add(action);
   renderChips();
 });
 
 document.addEventListener("keyup", (event) => {
-  const action = KEY_TO_ACTION[event.code];
+  const action = keyToAction[event.code];
   if (!action || state.mode !== "keyboard") return;
   state.keyboardHeld.delete(action);
   renderChips();
 });
 
-wireTrickSheet();
+wireDialogs();
 
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) releaseEverything();
@@ -314,5 +403,6 @@ window.addEventListener("pagehide", () => {
 // ------------------------------------------------------------------- start
 
 applyMode(readMode());
+applyPreset(readPreset());
 drawPreview();
 refreshFiles();

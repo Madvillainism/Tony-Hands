@@ -4,7 +4,7 @@ import { TRACKING, ZONES } from "./config.js";
 import { GestureEngine } from "./gesture-engine.js";
 import { ACTION_LABELS } from "./bridge.js";
 import { drawOverlay } from "./overlay.js";
-import { wireTrickSheet } from "./dialog.js";
+import { wireDialogs } from "./dialog.js";
 
 const els = {
   start: document.getElementById("start"),
@@ -165,7 +165,7 @@ els.start.addEventListener("click", () => {
   engine.start();
 });
 
-wireTrickSheet();
+wireDialogs();
 
 window.addEventListener("pagehide", () => state.engine?.stop());
 

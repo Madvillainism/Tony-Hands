@@ -1,4 +1,4 @@
-// Shared trick-sheet wiring for both pages.
+// Shared dialog wiring for both pages.
 //
 // `closedby="any"` gives native light dismiss in Chrome/Edge/Firefox. Safari
 // and other Baseline-2024 browsers still get Esc/back dismissal from
@@ -14,18 +14,7 @@ function outsideDialog(event, dialog) {
   );
 }
 
-export function wireTrickSheet() {
-  const dialog = document.getElementById("tricks");
-  if (!dialog) return;
-
-  for (const trigger of document.querySelectorAll("[data-open-dialog]")) {
-    trigger.addEventListener("click", () => {
-      if (dialog.id === trigger.dataset.openDialog && !dialog.open) {
-        dialog.showModal();
-      }
-    });
-  }
-
+function wireLightDismiss(dialog) {
   if ("closedBy" in HTMLDialogElement.prototype) return;
 
   // Test pointer position, not event.target: dialog padding and gaps between
@@ -36,8 +25,21 @@ export function wireTrickSheet() {
   });
   dialog.addEventListener("pointerup", (event) => {
     // Require press and release outside so a selection drag that ends on the
-    // backdrop does not dismiss the sheet.
+    // backdrop does not dismiss the dialog.
     if (pressedOutside && outsideDialog(event, dialog)) dialog.close();
     pressedOutside = false;
   });
+}
+
+export function wireDialogs() {
+  for (const dialog of document.querySelectorAll("dialog[closedby='any']")) {
+    wireLightDismiss(dialog);
+  }
+
+  for (const trigger of document.querySelectorAll("[data-open-dialog]")) {
+    trigger.addEventListener("click", () => {
+      const dialog = document.getElementById(trigger.dataset.openDialog);
+      if (dialog && !dialog.open) dialog.showModal();
+    });
+  }
 }

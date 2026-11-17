@@ -87,6 +87,32 @@
               </p>
             </div>
 
+            <div class="gesture-hud" id="gesture-hud" aria-hidden="true">
+              <p class="gesture-hud__title">Gesture controls</p>
+              <div class="gesture-hud__grid">
+                <div>
+                  <h3>Move · left hand</h3>
+                  <p>Left / right / up / down zones</p>
+                </div>
+                <div>
+                  <h3>Tricks · right hand</h3>
+                  <p>✋ Cross · 👍 Circle · ✌️ Triangle · 🤘 Square</p>
+                  <p>☝️ R2 · ✊ release</p>
+                </div>
+              </div>
+              <ul class="chips chips--hud">
+                <li><span class="chip" data-action="dpad_up"><span class="glyph" aria-hidden="true">↑</span>Up</span></li>
+                <li><span class="chip" data-action="dpad_down"><span class="glyph" aria-hidden="true">↓</span>Down</span></li>
+                <li><span class="chip" data-action="dpad_left"><span class="glyph" aria-hidden="true">←</span>Left</span></li>
+                <li><span class="chip" data-action="dpad_right"><span class="glyph" aria-hidden="true">→</span>Right</span></li>
+                <li><span class="chip" data-action="cross"><span class="glyph" aria-hidden="true">✕</span>Cross</span></li>
+                <li><span class="chip" data-action="circle"><span class="glyph" aria-hidden="true">○</span>Circle</span></li>
+                <li><span class="chip" data-action="triangle"><span class="glyph" aria-hidden="true">△</span>Triangle</span></li>
+                <li><span class="chip" data-action="square"><span class="glyph" aria-hidden="true">□</span>Square</span></li>
+                <li><span class="chip" data-action="r2">R2</span></li>
+              </ul>
+            </div>
+
             <div class="cab__scanlines" aria-hidden="true"></div>
           </div>
 
@@ -120,9 +146,25 @@
                 <span>Keyboard</span>
               </label>
             </fieldset>
+            <h3 class="card__sub">Keyboard layout</h3>
+            <fieldset class="segmented">
+              <legend class="visually-hidden">Keyboard preset</legend>
+              <label class="segmented__opt">
+                <input type="radio" name="control-preset" value="desktop" />
+                <span>Desktop<small>classic</small></span>
+              </label>
+              <label class="segmented__opt">
+                <input type="radio" name="control-preset" value="skate" />
+                <span>Skate<small>WASD · IJKL</small></span>
+              </label>
+            </fieldset>
+            <p class="card__hint" id="preset-hint">Classic RetroArch keys.</p>
             <p class="card__hint" id="mode-hint" aria-live="polite">
               Pick how you want to ride.
             </p>
+            <button class="btn btn--ghost" id="reload" type="button" hidden>
+              Reload to apply keys
+            </button>
             <div class="card__row">
               <a class="btn btn--ghost" href="./demo.html">Test gestures</a>
               <button class="btn btn--ghost" id="release" type="button">
@@ -300,6 +342,49 @@
             </p>
           </section>
         </div>
+      </div>
+    </dialog>
+
+    <dialog class="sheet intro" id="gesture-intro" aria-labelledby="intro-title" closedby="any">
+      <div class="sheet__inner">
+        <header class="sheet__head">
+          <h2 class="sheet__title" id="intro-title">Ride with your hands</h2>
+          <form method="dialog">
+            <button class="sheet__close" type="submit" aria-label="Close the gesture introduction">×</button>
+          </form>
+        </header>
+        <div class="sheet__body">
+          <ul class="intro__grid">
+            <li class="intro__demo">
+              <span class="intro__hand intro__hand--tap" aria-hidden="true">✋</span>
+              <span class="chip">Cross</span>
+              <p>Open palm holds Cross. Make a fist to ollie.</p>
+            </li>
+            <li class="intro__demo">
+              <span class="intro__hand intro__hand--slide" aria-hidden="true">☝️</span>
+              <span class="chip">D-Pad</span>
+              <p>Left palm moves to an edge of the zone grid to steer.</p>
+            </li>
+            <li class="intro__demo">
+              <span class="intro__hand intro__hand--cycle" aria-hidden="true">✌️</span>
+              <span class="chip">Triangle</span>
+              <p>Peace grinds. Thumbs up grabs, an L flips.</p>
+            </li>
+            <li class="intro__demo">
+              <span class="intro__hand intro__hand--fade" aria-hidden="true">✊</span>
+              <span class="chip">Release</span>
+              <p>A fist lets go of whatever you are holding.</p>
+            </li>
+            <li class="intro__demo">
+              <span class="intro__hand intro__hand--leave" aria-hidden="true">🖐️</span>
+              <span class="chip">Neutral</span>
+              <p>Move a hand out of frame and its inputs release too.</p>
+            </li>
+          </ul>
+        </div>
+        <form method="dialog" class="intro__close">
+          <button class="btn btn--primary" type="submit" autofocus>Got it — start riding</button>
+        </form>
       </div>
     </dialog>
 

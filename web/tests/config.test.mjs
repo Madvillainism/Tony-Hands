@@ -2,8 +2,17 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { loadModule } from "./load.mjs";
 
-const { CORES, GAME, DEPLOY, DESKTOP_CONTROLS, ZONES } =
-  await loadModule("../config.js");
+const {
+  CORES,
+  GAME,
+  DEPLOY,
+  DESKTOP_CONTROLS,
+  SKATE_CONTROLS,
+  CONTROL_PRESETS,
+  DEFAULT_PRESET,
+  keyNameToCode,
+  ZONES,
+} = await loadModule("../config.js");
 
 test("pcsx_rearmed is the only core", () => {
   assert.equal(CORES.length, 1);
@@ -47,6 +56,48 @@ test("controller table has all four players and the desktop key map", () => {
   assert.equal(p0[8].value, "x");
   assert.equal(p0[9].value, "s");
   assert.equal(p0[1].value, "a");
+});
+
+test("skate preset maps WASD, IJKL and O with unique keys", () => {
+  for (const player of [0, 1, 2, 3]) assert.ok(SKATE_CONTROLS[player]);
+  const p = SKATE_CONTROLS[0];
+  const expected = {
+    0: "k", // Cross / ollie
+    1: "j", // Square / flip
+    4: "w", // D-pad up
+    5: "s", // D-pad down
+    6: "a", // D-pad left
+    7: "d", // D-pad right
+    8: "l", // Circle / grab
+    9: "i", // Triangle / grind
+    10: "q", // L1
+    11: "e", // R1
+    12: "tab", // L2
+    13: "o", // R2
+  };
+  for (const [index, value] of Object.entries(expected)) {
+    assert.equal(p[index].value, value, `index ${index}`);
+  }
+  const names = Object.values(p).map((entry) => entry.value);
+  assert.equal(new Set(names).size, names.length, "no duplicate keys");
+  // value2 labels must stay identical across presets.
+  for (const index of Object.keys(p)) {
+    assert.equal(p[index].value2, DESKTOP_CONTROLS[0][index].value2);
+  }
+});
+
+test("presets registry exposes both layouts", () => {
+  assert.equal(DEFAULT_PRESET, "desktop");
+  assert.deepEqual(Object.keys(CONTROL_PRESETS), ["desktop", "skate"]);
+  assert.equal(CONTROL_PRESETS.skate.controls, SKATE_CONTROLS);
+});
+
+test("keyNameToCode handles EJS key names", () => {
+  assert.equal(keyNameToCode("w"), "KeyW");
+  assert.equal(keyNameToCode("up arrow"), "ArrowUp");
+  assert.equal(keyNameToCode("enter"), "Enter");
+  assert.equal(keyNameToCode("shift"), "ShiftLeft");
+  assert.equal(keyNameToCode(""), null);
 });
 
 test("movement zones mirror config.toml", () => {

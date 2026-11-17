@@ -63,6 +63,8 @@ export const TRACKING = Object.freeze({
 export const STORAGE_KEYS = Object.freeze({
   mode: "tony-hands:control-mode",
   core: "tony-hands:core",
+  controls: "tony-hands:control-preset",
+  introSeen: "tony-hands:gesture-intro-seen",
 });
 
 // Matches RetroArch's stock keyboard layout, which is what the desktop bridge
@@ -95,3 +97,56 @@ export const DESKTOP_CONTROLS = Object.freeze({
   2: {},
   3: {},
 });
+
+// Skate preset: WASD steers; I/J/K/L are grind/flip/ollie/grab; O taps R2.
+// Shoulders follow the preset shown earlier: Q=L1, E=R1, Tab=L2.
+export const SKATE_CONTROLS = Object.freeze({
+  0: {
+    0: { value: "k", value2: "BUTTON_2" }, // Cross — ollie
+    1: { value: "j", value2: "BUTTON_4" }, // Square — flip
+    2: { value: "shift", value2: "SELECT" },
+    3: { value: "enter", value2: "START" },
+    4: { value: "w", value2: "DPAD_UP" },
+    5: { value: "s", value2: "DPAD_DOWN" },
+    6: { value: "a", value2: "DPAD_LEFT" },
+    7: { value: "d", value2: "DPAD_RIGHT" },
+    8: { value: "l", value2: "BUTTON_1" }, // Circle — grab
+    9: { value: "i", value2: "BUTTON_3" }, // Triangle — grind
+    10: { value: "q", value2: "LEFT_TOP_SHOULDER" },
+    11: { value: "e", value2: "RIGHT_TOP_SHOULDER" },
+    12: { value: "tab", value2: "LEFT_BOTTOM_SHOULDER" },
+    13: { value: "o", value2: "RIGHT_BOTTOM_SHOULDER" },
+  },
+  1: {},
+  2: {},
+  3: {},
+});
+
+export const CONTROL_PRESETS = Object.freeze({
+  desktop: Object.freeze({
+    label: "Desktop",
+    note: "Z, X, S, A + arrows. The original RetroArch layout.",
+    controls: DESKTOP_CONTROLS,
+  }),
+  skate: Object.freeze({
+    label: "Skate — WASD",
+    note: "WASD to steer; I grind, J flip, K ollie, L grab, O for R2.",
+    controls: SKATE_CONTROLS,
+  }),
+});
+
+export const DEFAULT_PRESET = "desktop";
+
+// Convert an EmulatorJS key name into a KeyboardEvent.code for the chip readout.
+export function keyNameToCode(value) {
+  if (!value) return null;
+  if (value === "up arrow") return "ArrowUp";
+  if (value === "down arrow") return "ArrowDown";
+  if (value === "left arrow") return "ArrowLeft";
+  if (value === "right arrow") return "ArrowRight";
+  if (value === "enter") return "Enter";
+  if (value === "tab") return "Tab";
+  if (value === "shift") return "ShiftLeft";
+  if (/^[a-z]$/.test(value)) return `Key${value.toUpperCase()}`;
+  return null;
+}
