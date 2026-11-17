@@ -11,6 +11,11 @@ Tony-Hands watches your hands with [MediaPipe](https://github.com/google-ai-edge
 
 > **Platform:** Windows 10/11 · **Latency target:** 30 FPS (33 ms/frame) · **Camera:** any webcam
 
+> **On the `feat/web` branch:** the game is also playable in the browser —
+> EmulatorJS + `pcsx_rearmed`, with a gesture/keyboard toggle and a separate
+> gesture test bench. See [Web version](#web-version) and
+> [web/README.md](web/README.md).
+
 ---
 
 ## Table of contents
@@ -416,30 +421,31 @@ Details, latency budget, and the module map are in **[docs/SETUP.md](docs/SETUP.
 
 ## Web version
 
-There is a runnable browser demo in **`web/`**. It runs MediaPipe's hand
-landmarker in WASM, draws the same zones as the desktop overlay, and lights up
-the inputs a game would receive. No install, no Python.
+There is a **playable browser version** in **`web/`**. It runs the same PS1 disc
+through EmulatorJS (`pcsx_rearmed`) and lets you switch between hand gestures
+and the keyboard — the same key map as the desktop app. No install, no Python.
 
 ```powershell
 # from the repository root
 python -m http.server 8000 --directory web
 ```
 
-Open <http://localhost:8000>, press **Start camera**, and allow camera access.
-The first load downloads the MediaPipe runtime and the ~7.5 MB hand model.
+Open <http://localhost:8000> to play. The first load downloads the EmulatorJS
+runtime and the MediaPipe hand model; the ~600 MB disc image and the BIOS are
+read from `web/games/` on your machine and are never uploaded.
 
 The camera API requires a secure context, so `localhost` or HTTPS is mandatory —
-opening `index.html` from disk will not work.
+opening `index.html` from disk will not work. For a quick gesture check without
+booting a game, open <http://localhost:8000/demo.html>.
 
-The demo is intentionally **input-only**: it does not press keys and does not
-run a game. It exists to check gestures and tuning before wiring a game in.
 The gesture classifier and state machines in `web/gestures.js` are a direct port
 of `src/`, with the same thresholds.
 
 | Status | Feature |
 |---|---|
 | ✅ Done | Browser camera + MediaPipe WASM + zone overlay + input readout |
-| 🚧 Next | Play THPS in the browser (EmulatorJS) |
+| ✅ Done | Gesture test bench (`demo.html`) |
+| ✅ Done | Play THPS in the browser with `pcsx_rearmed` + gesture/keyboard toggle |
 | 💡 Idea | Browser as a wireless controller for desktop RetroArch (WebSocket bridge) |
 
 Full details and troubleshooting: **[web/README.md](web/README.md)**.
@@ -457,7 +463,7 @@ tony-hands/
 ├── run.ps1                   # one-command launcher (RetroArch + tracker)
 ├── hand_landmarker.task      # downloaded model (not in git)
 ├── ps-buttons.jpg            # PlayStation button icons for the overlay
-├── web/                      # browser demo (MediaPipe WASM + canvas)
+├── web/                      # browser player (EmulatorJS + MediaPipe WASM)
 ├── src/
 │   ├── main.py               # entry point, CLI flags
 │   ├── config.py             # TOML loader

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gesture test — Tony-Hands</title>
+    <meta
+      name="description"
+      content="Test bench for Tony-Hands gestures: MediaPipe hand tracking in the browser, with movement zones and the PlayStation inputs each gesture produces."
+    />
+    <meta name="color-scheme" content="dark" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230b0b0d'/%3E%3Ctext x='32' y='45' font-family='Arial Black,Arial' font-size='30' font-weight='900' fill='%23ffd21e' text-anchor='middle'%3ETH%3C/text%3E%3C/svg%3E"
+    />
+    <link
+      rel="preload"
+      href="./fonts/anton-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="preconnect" href="https://storage.googleapis.com" crossorigin />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./demo.js"></script>
+  </head>
+  <body class="page page--demo">
+    <a class="skip-link" href="#stage">Skip to the preview</a>
+
+    <header class="masthead">
+      <div class="bar">
+        <a class="brand" href="./index.html" aria-label="Tony-Hands, play">
+          <span class="brand__stamp" aria-hidden="true">TH</span>
+          <span class="brand__name">Tony-Hands</span>
+        </a>
+        <nav class="bar__nav" aria-label="Site">
+          <a class="pill pill--go" href="./index.html">Play</a>
+          <button class="pill" type="button" data-open-dialog="tricks" aria-haspopup="dialog">
+            Trick sheet
+          </button>
+        </nav>
+      </div>
+
+      <div class="hero hero--compact">
+        <p class="eyebrow">
+          <span class="eyebrow__tag">Test bench</span>
+          <span>No game required</span>
+        </p>
+        <h1 class="hero__title">Check your <em>hands</em></h1>
+        <p class="hero__lede">
+          Same detector, zones, and state machines the play page runs, with
+          nothing on the line. Watch the chips fire to see what a game would
+          receive.
+        </p>
+      </div>
+    </header>
+
+    <main>
+      <section class="bench" aria-labelledby="stage-heading">
+        <div class="bench__stage">
+          <div class="cab">
+            <div class="cab__bar">
+              <p class="cab__rec">
+                <span class="cab__dot" data-lamp aria-hidden="true"></span>
+                <span id="status-text">Camera off</span>
+              </p>
+              <p class="cab__core" id="bench-fps">0 fps</p>
+            </div>
+            <div class="cab__screen">
+              <canvas
+                id="stage"
+                width="640"
+                height="480"
+                role="img"
+                aria-label="Mirrored camera preview. Movement zones are on the left half, action gestures on the right, with a skeleton over each tracked hand."
+              >
+                Your browser cannot display the camera preview.
+              </canvas>
+              <div class="cab__scanlines" aria-hidden="true"></div>
+            </div>
+            <div class="cab__deck cab__deck--split">
+              <button class="btn btn--primary" id="start" type="button">
+                Start camera
+              </button>
+              <p class="deck__note" id="hands">No hands detected.</p>
+            </div>
+          </div>
+
+          <p class="error" id="error" role="alert" hidden></p>
+        </div>
+
+        <aside class="rail" aria-label="Readout">
+          <section class="card">
+            <h2 class="card__title">Detected input</h2>
+            <p class="card__hint">
+              A game would receive these right now. Chips only — nothing is
+              typed into other windows.
+            </p>
+            <h3 class="card__sub">Movement · left hand</h3>
+            <ul class="chips" role="list">
+              <li><span class="chip" data-action="dpad_up"><span class="glyph" aria-hidden="true">↑</span>Up</span></li>
+              <li><span class="chip" data-action="dpad_down"><span class="glyph" aria-hidden="true">↓</span>Down</span></li>
+              <li><span class="chip" data-action="dpad_left"><span class="glyph" aria-hidden="true">←</span>Left</span></li>
+              <li><span class="chip" data-action="dpad_right"><span class="glyph" aria-hidden="true">→</span>Right</span></li>
+            </ul>
+            <h3 class="card__sub">Actions · right hand</h3>
+            <ul class="chips" role="list">
+              <li><span class="chip" data-action="cross"><span class="glyph" aria-hidden="true">✕</span>Cross</span></li>
+              <li><span class="chip" data-action="circle"><span class="glyph" aria-hidden="true">○</span>Circle</span></li>
+              <li><span class="chip" data-action="triangle"><span class="glyph" aria-hidden="true">△</span>Triangle</span></li>
+              <li><span class="chip" data-action="square"><span class="glyph" aria-hidden="true">□</span>Square</span></li>
+              <li><span class="chip" data-action="r2">R2</span></li>
+            </ul>
+            <h3 class="card__sub">Right now</h3>
+            <p class="summary" id="summary">Nothing pressed</p>
+          </section>
+
+          <section class="card">
+            <h2 class="card__title">Reading the overlay</h2>
+            <dl class="legend">
+              <div><dt>Orange skeleton</dt><dd>Hand tracked as left</dd></div>
+              <div><dt>Cyan skeleton</dt><dd>Hand tracked as right</dd></div>
+              <div><dt>Yellow line</dt><dd>Left / right split</dd></div>
+              <div><dt>Solid grey</dt><dd>Zone thresholds</dd></div>
+              <div><dt>Dotted grey</dt><dd>Hysteresis exits</dd></div>
+              <div><dt>fps · hands</dt><dd>Inference rate</dd></div>
+            </dl>
+          </section>
+
+          <section class="card">
+            <h2 class="card__title">Tips</h2>
+            <ul class="ticks">
+              <li>Palm to the camera, 30–50&nbsp;cm away, even lighting.</li>
+              <li>Exaggerate the shape: a lazy L reads as a fist.</li>
+              <li>Two hands at once is fine; they pick a side by position.</li>
+              <li>Losing a hand releases everything, by design.</li>
+            </ul>
+            <p class="card__row">
+              <a class="btn btn--ghost" href="./index.html">Back to the game</a>
+            </p>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p class="footer__mark" aria-hidden="true">Tony-Hands</p>
+      <p>
+        Runs entirely on your device with
+        <a href="https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker">MediaPipe Hand Landmarker</a>.
+        The camera stream never leaves the browser.
+        <a href="https://github.com/Madvillainism/Tony-Hands">Source on GitHub</a>.
+      </p>
+    </footer>
+
+    <dialog class="sheet" id="tricks" aria-labelledby="tricks-title" closedby="any">
+      <div class="sheet__inner">
+        <header class="sheet__head">
+          <h2 class="sheet__title" id="tricks-title">Trick sheet</h2>
+          <form method="dialog">
+            <button class="sheet__close" type="submit" aria-label="Close the trick sheet">×</button>
+          </form>
+        </header>
+        <div class="sheet__body">
+          <section>
+            <h3 class="sheet__sub">Gestures</h3>
+            <ul class="tricks">
+              <li class="trick"><span class="trick__glyph" aria-hidden="true">✋</span><span class="trick__name">Open palm</span><span class="trick__key">Cross</span><span class="trick__note">Crouch and hold.</span></li>
+              <li class="trick"><span class="trick__glyph" aria-hidden="true">👍</span><span class="trick__name">Thumbs up</span><span class="trick__key">Circle</span><span class="trick__note">Grab.</span></li>
+              <li class="trick"><span class="trick__glyph" aria-hidden="true">✌️</span><span class="trick__name">Peace sign</span><span class="trick__key">Triangle</span><span class="trick__note">Grind.</span></li>
+              <li class="trick"><span class="trick__glyph" aria-hidden="true">🤘</span><span class="trick__name">L shape</span><span class="trick__key">Square</span><span class="trick__note">Flip trick.</span></li>
+              <li class="trick"><span class="trick__glyph" aria-hidden="true">☝️</span><span class="trick__name">Point, left hand</span><span class="trick__key">R2 tap</span><span class="trick__note">120&nbsp;ms press.</span></li>
+              <li class="trick"><span class="trick__glyph" aria-hidden="true">✊</span><span class="trick__name">Fist</span><span class="trick__key">Release</span><span class="trick__note">Drops what is held.</span></li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </dialog>
+
+    <video
+      id="camera"
+      class="visually-hidden"
+      playsinline
+      muted
+      autoplay
+      aria-hidden="true"
+    ></video>
+
+    <p class="visually-hidden" id="announcer" role="status"></p>
+  </body>
+</html>

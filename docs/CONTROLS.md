@@ -105,3 +105,25 @@ Press **ESC** in the preview to quit.
 | Keep the left hand left, right hand right | Crossing the midline repeatedly |
 
 If a gesture misfires, check the [tuning table](../README.md#symptom--setting) before editing code.
+
+---
+
+## Web player
+
+The browser player (`http://localhost:8000` after
+`python -m http.server 8000 --directory web`) uses the same gestures and zones
+above, and adds an **Input** toggle between Gestures and Keyboard. Switching to
+Gestures starts the camera once the game is running; switching to Keyboard
+stops it and uses these keys (identical to the desktop app):
+
+| Keys | Button |
+|---|---|
+| Arrow keys | D-Pad |
+| `Z` / `X` / `S` / `A` | Cross / Circle / Triangle / Square |
+| `Q` / `W` / `E` | L1 / R1 / R2 |
+| `Enter` / `Shift` | Start / Select |
+
+Open <http://localhost:8000/demo.html> for the gesture test bench — it draws
+the full skeleton overlay and lights chips without booting a game. The in-page
+**Trick sheet** dialog repeats both tables. See [web/README.md](../web/README.md)
+for setup and troubleshooting.

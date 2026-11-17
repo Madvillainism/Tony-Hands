@@ -43,6 +43,15 @@ That is it — the gestures now drive that core. Buttons the game does not use s
 
 > This works, but it is fragile: if the emulator window is not focused, inputs go to whatever is focused.
 
+### Web player
+
+The browser player plays the same PS1 disc through EmulatorJS's `pcsx_rearmed`
+core, so the game-agnostic gesture layer applies there too (no window focus —
+inputs go straight to the emulator). Copy your own `.bin` and BIOS into
+`web/games/` and open <http://localhost:8000>. The Input card switches between
+gestures and the keyboard map above. Other disc-based systems would need their
+own EmulatorJS core and local files; see [web/README.md](../web/README.md).
+
 ---
 
 ## What is missing for "any game"

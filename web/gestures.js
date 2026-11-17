@@ -251,6 +251,20 @@ export class MovementStateMachine {
     }
     return events;
   }
+
+  /** Drop any held direction, for when the hand leaves the frame. */
+  release() {
+    const events = [];
+    if (this.h !== "neutral") {
+      events.push({ action: `dpad_${this.h}`, press: false });
+      this.h = "neutral";
+    }
+    if (this.v !== "neutral") {
+      events.push({ action: `dpad_${this.v}`, press: false });
+      this.v = "neutral";
+    }
+    return events;
+  }
 }
 
 const GESTURE_TO_ACTION = {

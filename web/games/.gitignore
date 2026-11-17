@@ -1,0 +1,7 @@
+# Private, legally-obtained game data lives here and must never be committed.
+# The wildcard ignores everything in this folder; only these two files are
+# tracked. If you change this file, keep both negations.
+
+*
+!.gitignore
+!README.md
