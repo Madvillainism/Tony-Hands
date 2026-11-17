@@ -448,6 +448,11 @@ of `src/`, with the same thresholds.
 | ✅ Done | Play THPS in the browser with `pcsx_rearmed` + gesture/keyboard toggle |
 | 💡 Idea | Browser as a wireless controller for desktop RetroArch (WebSocket bridge) |
 
+The live build is deployed with Cloudflare Pages + R2 and boots straight into
+the game with keyboard controls; the deployment recipe is in
+**[web/README.md](web/README.md#deploying-to-cloudflare-pages--r2)**. Local
+development still uses `web/games/` and the manual boot gate.
+
 Full details and troubleshooting: **[web/README.md](web/README.md)**.
 
 The web work follows Google Chrome's [Modern Web Guidance](https://github.com/GoogleChrome/modern-web-guidance)

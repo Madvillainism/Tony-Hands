@@ -5,7 +5,7 @@
 // `web/games/`, which is git-ignored, so this page only ever plays files the
 // person running it already owns.
 
-import { CORES, DEFAULT_CORE, DESKTOP_CONTROLS, GAME } from "./config.js";
+import { CORES, DEFAULT_CORE, DEPLOY, DESKTOP_CONTROLS, GAME } from "./config.js";
 
 const DATA_PATH = "https://cdn.emulatorjs.org/stable/data/";
 const LOADER_URL = `${DATA_PATH}loader.js`;
@@ -51,8 +51,8 @@ export function getGameManager() {
 let bootPromise = null;
 
 /**
- * Inject EmulatorJS once. The emulator shows its own start screen, so nothing
- * is downloaded until the person clicks it.
+ * Inject EmulatorJS once. Normally the emulator shows its own start screen;
+ * in the deployed build (DEPLOY.autoStart) it boots straight into the game.
  *
  * @param {object} options
  * @param {string} options.player Selector for the container element.
@@ -71,7 +71,7 @@ export function bootEmulator({ player, onGameStart, onExit }) {
     window.EJS_biosUrl = GAME.bios;
     window.EJS_gameName = GAME.name;
     window.EJS_pathtodata = DATA_PATH;
-    window.EJS_startOnLoaded = false;
+    window.EJS_startOnLoaded = DEPLOY.autoStart;
     // Threads need COOP/COEP headers, which a plain static server does not
     // send. Staying single-threaded keeps `python -m http.server` working.
     window.EJS_threads = false;

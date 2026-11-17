@@ -1,7 +1,7 @@
 // Play page controller: files, emulator, gesture engine, input bridge, mode
 // switch. The emulator owns gameplay; this module owns the handoff.
 
-import { DEFAULT_CORE, GAME, STORAGE_KEYS, TRACKING, ZONES } from "./config.js";
+import { DEFAULT_CORE, DEPLOY, GAME, STORAGE_KEYS, TRACKING, ZONES } from "./config.js";
 import { GestureEngine } from "./gesture-engine.js";
 import { ACTION_LABELS, PadBridge } from "./bridge.js";
 import {
@@ -189,7 +189,10 @@ function releaseEverything(message) {
 
 function readMode() {
   const stored = localStorage.getItem(STORAGE_KEYS.mode);
-  return stored === "keyboard" ? "keyboard" : "gestures";
+  if (stored === "keyboard" || stored === "gestures") return stored;
+  // No saved choice yet: keyboard-first on the deployed site so the camera
+  // permission prompt does not fire on arrival; gestures locally.
+  return DEPLOY.defaultMode;
 }
 
 function readCore() {
@@ -255,8 +258,9 @@ async function refreshFiles() {
 
   if (result.ready) {
     els.gateTitle.textContent = "Ready to ride";
-    els.gateNote.textContent =
-      "The disc image and BIOS were found in web/games/. Nothing leaves this machine.";
+    els.gateNote.textContent = DEPLOY.autoStart
+      ? "Loading the game. Switch to Gestures any time to play with your hands."
+      : "The disc image and BIOS were found in web/games/. Nothing leaves this machine.";
     els.gateHint.textContent = `${GAME.rom} · ${formatBytes(result.rom.bytes)}`;
     els.boot.disabled = state.booted;
     setStatus("idle", "Ready to boot");
@@ -274,6 +278,9 @@ async function refreshFiles() {
   }
 
   els.recheck.disabled = false;
+
+  // The deployed build boots on arrival; local dev waits for a button press.
+  if (result.ready && DEPLOY.autoStart && !state.booted) bootGame();
 }
 
 // ---------------------------------------------------------------- emulator

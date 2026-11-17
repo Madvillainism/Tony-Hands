@@ -19,4 +19,6 @@ diag_output.txt
 !ps-buttons.jpg
 node_modules/
 dist/
+# Cloudflare deploy inputs (URLs and credentials) — never commit.
+scripts/deploy.env
 *.egg-info/

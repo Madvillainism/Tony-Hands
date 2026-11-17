@@ -4,10 +4,22 @@
 // live in config.toml instead of being sprinkled through the pipeline.
 // `games/` is git-ignored; see web/games/README.md.
 
+// `deploy-config.js` sets this before the modules load. Everything falls back
+// to the local web/games/ paths, so localhost and the Node tests need no setup.
+const assets = globalThis.TONY_HANDS_ASSETS ?? {};
+
 export const GAME = Object.freeze({
   name: "Tony Hands",
-  rom: "games/thps.bin",
-  bios: "games/scph5501.bin",
+  rom: assets.rom ?? "games/thps.bin",
+  bios: assets.bios ?? "games/scph5501.bin",
+});
+
+// Production build sets autoStart + keyboard-first so the game boots on arrival
+// without a camera permission prompt. Local dev keeps the manual boot gate and
+// gesture-first default.
+export const DEPLOY = Object.freeze({
+  autoStart: assets.autoStart === true,
+  defaultMode: assets.defaultMode === "keyboard" ? "keyboard" : "gestures",
 });
 
 // pcsx_rearmed is the only supported core. mednafen_psx_hw is broken in the

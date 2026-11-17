@@ -181,6 +181,80 @@ node --test web/tests/*.test.mjs
 
 ---
 
+## Deploying to Cloudflare Pages + R2
+
+The live site serves the player from Cloudflare Pages and the (large) game files
+from a public Cloudflare R2 bucket. The bucket is required because Pages caps a
+single file at 25 MiB and the disc image is ~600 MB. R2 has no egress fees and
+supports CORS; consumer drives and GitHub Releases do not send the headers the
+browser needs.
+
+**Before anything is public, note the licensing:** a commercially published
+ROM and BIOS are still copyrighted even if you obtained them legitimately.
+Publishing them publicly is your call and your risk. The repository never
+contains them.
+
+### One-time setup
+
+```powershell
+# Authenticate this machine (opens a browser for approval) — no secrets in the repo
+npx wrangler login
+
+# Create the bucket and a public asset URL
+npx wrangler r2 bucket create tony-hands-games
+npx wrangler r2 bucket dev-url enable tony-hands-games
+```
+
+Set a CORS policy on the bucket using the included `scripts/cors.json`:
+
+```json
+[
+  {
+    "AllowedOrigins": ["*"],
+    "AllowedMethods": ["GET", "HEAD"]
+  }
+]
+```
+
+```powershell
+npx wrangler r2 bucket cors set tony-hands-games --file scripts/cors.json
+```
+
+`HEAD` is required: the page probes the files before booting. Create an R2 S3
+API token (Object Read & Write, scoped to the bucket) and put its values plus
+your account ID in **user environment variables** — never in git:
+
+```text
+R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET
+```
+
+### Each deploy
+
+```powershell
+# from the repository root
+$env:R2_PUBLIC_BASE = "https://pub-<hash>.r2.dev"   # your bucket's public URL
+node scripts/prepare-deploy.mjs                      # builds dist/, no games/
+powershell -File scripts/upload-assets.ps1          # uploads ROM + BIOS to R2
+npx wrangler pages deploy dist --project-name=tony-hands
+```
+
+`scripts/prepare-deploy.mjs` rewrites `dist/deploy-config.js` with the R2 URLs,
+`autoStart: true`, and `defaultMode: "keyboard"` so the game boots on arrival
+without a camera prompt. Local `web/` is unchanged. To avoid retyping the base
+URL, put `R2_PUBLIC_BASE=...` in `scripts/deploy.env` (git-ignored).
+
+Verify the asset headers before going live:
+
+```powershell
+curl -I -H "Origin: https://tony-hands.pages.dev" "https://pub-<hash>.r2.dev/thps.bin"
+```
+
+Expect `200`, `access-control-allow-origin: *`, and
+`content-length: 660815568`. Then load the site in a fresh browser profile and
+confirm the game reaches the title screen with no CORS errors in DevTools.
+
+---
+
 ## Status
 
 - [x] Camera + MediaPipe WASM + zone overlay + input readout
@@ -188,7 +262,7 @@ node --test web/tests/*.test.mjs
 - [x] Playable THPS in the browser with `pcsx_rearmed`
 - [x] Gesture / keyboard toggle
 - [ ] Browser as a wireless controller for desktop RetroArch (idea)
-- [ ] Public deployment (idea — see `games/README.md` for the licensing caveat)
+- [x] Public deployment recipe (Cloudflare Pages + R2 — see "Deploying" above)
 
 ---
 
