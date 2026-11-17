@@ -156,7 +156,8 @@ Games that need more than the current inputs: anything with camera control, raci
 | Config-driven `[bindings]` / `[target]` | ⏳ Next |
 | `--profile` game presets | ⏳ Planned |
 | Virtual gamepad (ViGEm) backend | ⏳ Planned |
-| Browser version (`feat/web`) | 🚧 In progress |
+| Browser input demo (`web/`) | ✅ Done |
+| Playable browser version (EmulatorJS) | ⏳ Planned |
 | macOS / Linux port | 💡 Idea (needs a non-Win32 focus backend) |
 
 If you want a specific game supported, open an issue with the emulator, the control scheme, and which buttons it needs. The most useful contribution is a working key layout — the gesture side is usually already capable.

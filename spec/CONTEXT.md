@@ -36,5 +36,6 @@ from a webcam. No controller, no hardware mods.
 
 1. Config-driven `[bindings]` and `[target]` (other games/emulators).
 2. `--profile` presets per game.
-3. Web version (`feat/web`): MediaPipe WASM + Canvas demo, then EmulatorJS.
+3. Playable browser version: the MediaPipe WASM input demo in `web/` is done;
+   next is EmulatorJS or a WebSocket controller bridge.
 4. Optional ViGEm virtual gamepad backend.
