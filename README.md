@@ -11,10 +11,9 @@ Tony-Hands watches your hands with [MediaPipe](https://github.com/google-ai-edge
 
 > **Platform:** Windows 10/11 · **Latency target:** 30 FPS (33 ms/frame) · **Camera:** any webcam
 
-> **On the `feat/web` branch:** the game is also playable in the browser —
-> EmulatorJS + `pcsx_rearmed`, with a gesture/keyboard toggle and a separate
-> gesture test bench. See [Web version](#web-version) and
-> [web/README.md](web/README.md).
+> **Play in your browser:** [tony-hands.pages.dev](https://tony-hands.pages.dev)
+> — gesture/keyboard toggle, no install. The source is on the `feat/web` branch;
+> see [Web version](#web-version) and [web/README.md](web/README.md).
 
 ---
 
@@ -421,9 +420,11 @@ Details, latency budget, and the module map are in **[docs/SETUP.md](docs/SETUP.
 
 ## Web version
 
-There is a **playable browser version** in **`web/`**. It runs the same PS1 disc
-through EmulatorJS (`pcsx_rearmed`) and lets you switch between hand gestures
-and the keyboard — the same key map as the desktop app. No install, no Python.
+There is a **playable browser version** in **`web/`**, live at
+**[tony-hands.pages.dev](https://tony-hands.pages.dev)**. It runs the same PS1
+disc through EmulatorJS and lets you switch between hand gestures and the
+keyboard — the same key map as the desktop app. No install, no Python, no
+account.
 
 ```powershell
 # from the repository root
@@ -446,13 +447,14 @@ of `src/`, with the same thresholds.
 |---|---|
 | ✅ Done | Browser camera + MediaPipe WASM + zone overlay + input readout |
 | ✅ Done | Gesture test bench (`demo.html`) |
-| ✅ Done | Play THPS in the browser with `pcsx_rearmed` + gesture/keyboard toggle |
+| ✅ Done | Play THPS in the browser with gesture/keyboard toggle |
+| ✅ Done | Live deployment at [tony-hands.pages.dev](https://tony-hands.pages.dev) |
 | 💡 Idea | Browser as a wireless controller for desktop RetroArch (WebSocket bridge) |
 
-The live build is deployed with Cloudflare Pages + R2 and boots straight into
-the game with keyboard controls; the deployment recipe is in
-**[web/README.md](web/README.md#deploying-to-cloudflare-pages--r2)**. Local
-development still uses `web/games/` and the manual boot gate.
+The live build boots straight into the game with keyboard controls and starts
+the camera only when you choose Gestures. The deployment recipe is in
+**[web/README.md](web/README.md#deploying-to-cloudflare-pages--r2)**; local
+development uses `web/games/` and a manual boot gate.
 
 Full details and troubleshooting: **[web/README.md](web/README.md)**.
 

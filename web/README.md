@@ -1,14 +1,19 @@
 # Tony-Hands — Web player
 
+**[Play it live: tony-hands.pages.dev](https://tony-hands.pages.dev)**
+
 Play Tony Hawk's Pro Skater in the browser with **hand gestures or a keyboard**.
-The page runs [EmulatorJS](https://emulatorjs.org) with the `pcsx_rearmed` core
-and feeds it the same gesture state machines the desktop app uses via MediaPipe
-Hand Landmarker. Your disc image and BIOS are read from `web/games/` on your own
-machine — nothing is uploaded.
+The page runs [EmulatorJS](https://emulatorjs.org) and feeds it the same gesture
+state machines the desktop app uses via MediaPipe Hand Landmarker.
 
 - No build step, no dependencies to install.
 - Gesture controls and a keyboard toggle, matching the desktop key map.
 - A separate gesture test bench at [`demo.html`](demo.html) for quick checks.
+
+> **Public build vs local build:** the live site streams its game files from a
+> public asset host and boots straight into the game with keyboard controls.
+> The local setup below reads files from `web/games/` and uses a manual boot
+> gate. Both use the same player code.
 
 ---
 
@@ -205,15 +210,20 @@ npx wrangler r2 bucket create tony-hands-games
 npx wrangler r2 bucket dev-url enable tony-hands-games
 ```
 
-Set a CORS policy on the bucket using the included `scripts/cors.json`:
+Set a CORS policy on the bucket using the included `scripts/cors.json`
+(the `rules` wrapper is required by the current Wrangler):
 
 ```json
-[
-  {
-    "AllowedOrigins": ["*"],
-    "AllowedMethods": ["GET", "HEAD"]
-  }
-]
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": ["*"],
+        "methods": ["GET", "HEAD"]
+      }
+    }
+  ]
+}
 ```
 
 ```powershell
@@ -227,6 +237,19 @@ your account ID in **user environment variables** — never in git:
 ```text
 R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET
 ```
+
+`R2_ACCESS_KEY_ID` must be the **32-character S3 Access Key ID**, not the
+`cfat_...` Cloudflare API token. Install **AWS CLI v2** to upload: the 630 MB
+disc exceeds Wrangler's 315 MB per-object limit, and AWS CLI v1 rejects R2's
+long secret. The upload script checks the bucket is clean before copying.
+
+### One-time Pages setup
+
+```powershell
+npx wrangler pages project create tony-hands --production-branch=feat/web --force
+```
+`--force` targets classic Pages (the new Pages-on-Workers delegation can
+misdetect a framework here). Only needed once; don't pass it to `deploy`.
 
 ### Each deploy
 
@@ -259,10 +282,10 @@ confirm the game reaches the title screen with no CORS errors in DevTools.
 
 - [x] Camera + MediaPipe WASM + zone overlay + input readout
 - [x] Gesture test bench (`demo.html`)
-- [x] Playable THPS in the browser with `pcsx_rearmed`
+- [x] Playable THPS in the browser with EmulatorJS
 - [x] Gesture / keyboard toggle
 - [ ] Browser as a wireless controller for desktop RetroArch (idea)
-- [x] Public deployment recipe (Cloudflare Pages + R2 — see "Deploying" above)
+- [x] Live at [tony-hands.pages.dev](https://tony-hands.pages.dev) (Cloudflare Pages + R2 — recipe above)
 
 ---
 
