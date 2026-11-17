@@ -55,6 +55,26 @@ foreach ($file in @($rom, $bios)) {
   }
 }
 
+# --- Guardrails: keep the bucket inside the free tier -------------------
+$expected = @("thps.bin", "scph5501.bin")
+
+$versioning = aws s3api get-bucket-versioning --bucket $bucket --endpoint-url $endpoint --output json 2>$null | ConvertFrom-Json
+if ($versioning.Status -eq "Enabled") {
+  Write-Error "Bucket versioning is enabled: old versions would keep consuming storage. Disable it before uploading."
+  exit 1
+}
+
+$existingRaw = aws s3api list-objects-v2 --bucket $bucket --endpoint-url $endpoint --output json 2>$null
+if ($LASTEXITCODE -eq 0 -and $existingRaw) {
+  $existing = ($existingRaw | ConvertFrom-Json).Contents | ForEach-Object { $_.Key }
+  $extra = @($existing | Where-Object { $_ -notin $expected })
+  if ($extra.Count -gt 0) {
+    Write-Warning "Unexpected keys already in bucket: $($extra -join ', ')"
+    $answer = Read-Host "Upload anyway? These may add storage costs [y/N]"
+    if ($answer -notmatch '^[Yy]$') { Write-Error "Aborted by user."; exit 1 }
+  }
+}
+
 Write-Host "Uploading thps.bin and scph5501.bin to R2 bucket '$bucket'..."
 
 aws s3 cp $rom "s3://$bucket/thps.bin" `
@@ -69,4 +89,12 @@ aws s3 cp $bios "s3://$bucket/scph5501.bin" `
   --content-type "application/octet-stream" | Out-Null
 if ($LASTEXITCODE -ne 0) { Write-Error "Failed to upload scph5501.bin"; exit 1 }
 
-Write-Host "Upload complete. Verify with: curl -I -H 'Origin: https://your-site.pages.dev' <R2 public URL>/thps.bin"
+foreach ($key in $expected) {
+  $head = aws s3api head-object --bucket $bucket --key $key --endpoint-url $endpoint --output json 2>$null | ConvertFrom-Json
+  $class = if ($head.StorageClass) { $head.StorageClass } else { "STANDARD" }
+  if ($class -ne "STANDARD") {
+    Write-Warning "$key has storage class '$class'. Only STANDARD has a free tier - check the bucket settings."
+  }
+}
+
+Write-Host "Upload complete. Verify with curl -I against the public URL for thps.bin"
