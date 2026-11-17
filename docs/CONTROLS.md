@@ -1,120 +1,107 @@
-# Tony Hands — Controls Reference
+# Tony-Hands — Controls Reference
 
-How to control **Tony Hawk's Pro Skater** with your hands via webcam.
+A one-page cheat-sheet. For installation and tuning, see the [README](../README.md).
 
 ---
 
-## Camera View
+## Camera layout
 
-The camera feed is split vertically down the middle:
-
+```text
+┌──────────────────────────────┬──────────────────────────────┐
+│  LEFT HALF                   │  RIGHT HALF                  │
+│  MOVEMENT (D-Pad)            │  ACTIONS (face buttons)      │
+│                              │                              │
+│   ↑ Up     y < 0.25          │   ✋ palm     → Cross         │
+│   ↓ Down   y > 0.75          │   👍 thumbs   → Circle        │
+│   ← Left   x < 0.20          │   ✌️ peace    → Triangle      │
+│   → Right  x > 0.30          │   🤘 L shape  → Square        │
+│   neutral  0.20 – 0.30       │   ✊ fist     → release       │
+│                              │                              │
+│   ☝️ point  → R2 tap          │                              │
+└──────────────────────────────┴──────────────────────────────┘
 ```
-┌──────────────────────┬──────────────────────┐
-│                      │                      │
-│   LEFT HALF          │   RIGHT HALF         │
-│   D-Pad Movement     │   Action Buttons     │
-│                      │                      │
-│   L │ NEUTRAL │ R    │   palm → Cross      │
-│   ───┼─────────┼───   │   fist → Circle     │
-│   U /  N  / D        │   peace → Triangle   │
-│                      │   L    → Square      │
-└──────────────────────┴──────────────────────┘
+
+Zone values are the defaults in `config.toml` (`[movement]`). The preview draws the actual boundaries.
+
+---
+
+## Movement — left hand
+
+The **palm center** decides the direction. Both axes are independent, so diagonals work.
+
+| Hand position | D-Pad |
+|---|---|
+| `x < left_max` | ← held |
+| `x > right_min` | → held |
+| `y < up_max` | ↑ held |
+| `y > down_min` | ↓ held |
+| middle band | nothing |
+
+- A **0.05 hysteresis** band stops the direction flickering at the edge.
+- Pointing with the **index finger only** taps **R2** (120 ms press, 250 ms cooldown). Useful for 180° spins.
+
+**Tip:** park your left hand in the middle of the left half between tricks. Resting near a boundary causes accidental turns.
+
+---
+
+## Actions — right hand
+
+| Gesture | How to make it | Button | Typical THPS use |
+|---|---|---|---|
+| ✋ Open palm | 2+ fingers extended | **Cross** | Hold to crouch, release to ollie |
+| 👍 Thumbs up | Thumb out, fingers curled | **Circle** | Grab |
+| ✌️ Peace sign | Index + middle up, ring + pinky curled | **Triangle** | Special / menu |
+| 🤘 L shape | Thumb + index out, rest curled | **Square** | Grind / manual |
+| ✊ Fist | All fingers curled | — | Releases the held button |
+
+Detection priority (first match wins):
+
+```text
+peace → L shape → thumbs up → point → open palm → fist
 ```
 
-- **Left hand** in the left half → controls D-Pad movement.
-- **Right hand** in the right half → performs action gestures.
-- A hand is on the side where its **wrist position** falls.
+### The ollie
 
----
+THPS charges a jump while Cross is held and jumps on release:
 
-## Movement (Left Half)
+1. Open palm → crouch / charge.
+2. Fist → release → ollie.
+3. Open → fist again for the next ollie.
 
-Your hand's **X position** controls left/right; **Y position** controls up/down.
-Both axes are independent — diagonals (Up+Left, Down+Right, etc.) are supported.
+### Switching tricks
 
-### Horizontal zones
-
-| Label | X range | D-Pad action |
-|-------|---------|--------------|
-| L     | `x < 0.18` | ← Left (held) |
-| N     | `0.18 – 0.32` | Nothing pressed |
-| R     | `x > 0.32` | → Right (held) |
-
-### Vertical zones
-
-| Label | Y range | D-Pad action |
-|-------|---------|--------------|
-| U     | `y < 0.25` | ↑ Up (held) |
-| N     | `0.25 – 0.75` | Nothing pressed |
-| D     | `y > 0.75` | ↓ Down (held) |
-
-**Tip:** Rest your hand in the center-left neutral zone when you don't want
-to move. The preview window shows zone boundary lines and a label
-(e.g. `D-PAD (L+U)` for top-left corner).
-
----
-
-## Actions (Right Half)
-
-Your right hand's **gesture** determines which face button is pressed.
-
-| Gesture | How to make it | Button | In-game use |
-|---------|---------------|--------|-------------|
-| ✋ Open palm | 2+ fingers extended, any combination. | **Cross** | Ollie, jump, confirm |
-| ✊ Fist | All fingers curled into palm. | **Circle** | Trick, grab, special |
-| ✌️ Peace sign | Index + middle up; ring + pinky down. | **Triangle** | Camera, pause-menu select, special tricks |
-| 🤘 L shape | Thumb + index out; middle/ring/pinky down. | **Square** | Manual, grind, revert |
-
-**The gesture that matches first wins.** Priority order:
-
-1. **Peace sign** — exact V shape with ring+pinky curled.
-2. **L shape** — thumb+index out, other fingers curled.
-3. **Open palm** — any 2+ fingers extended that aren't peace or L.
-4. **Fist** — everything else (no fingers extended).
-
-### Examples
-
-- Holding a relaxed open hand → Cross held (ollie repeatedly).
-- Making a fist → Circle press, then hold.
-- Switching from fist to palm → Circle released, Cross pressed.
-- No hand visible → all buttons released.
+Move straight from one shape to another (e.g. palm → peace). The old button releases, a short 90 ms cooldown prevents double-fires, then the new button presses. Making a fist is the explicit "let go" gesture.
 
 ---
 
 ## Preview window
 
-The preview window (`Tony Hands — Preview`) shows:
+| Element | Meaning |
+|---|---|
+| Yellow vertical line | Left/right split |
+| Gray vertical lines | Left / right zone boundaries |
+| Gray horizontal lines (left half) | Up / down zone boundaries |
+| Dotted gray lines | Hysteresis exit thresholds |
+| Colored dot + skeleton | Detected hand (left = orange, right = cyan) |
+| `D-PAD (L+U)` label | Active movement direction |
+| PS icon + pulsing ring | Active face button and press feedback |
+| `R2 TAP` | R2 is currently held |
+| `FPS`, `C: I: B: O:` | Frame rate and per-stage milliseconds |
+| `[ECO]` | Half-resolution inference is active |
 
-- **Yellow vertical line** — the left/right split.
-- **Gray vertical lines** — LEFT and RIGHT zone boundaries.
-- **Gray horizontal lines (left half only)** — UP and DOWN zone boundaries.
-- **Blue dot** — left-hand wrist position (with direction label).
-- **Red dot** — right-hand wrist position (with action label).
-- **Black bottom bar** — legend of all controls.
-
-Press **ESC** with the preview window focused to quit.
-
----
-
-## Tips for reliable control
-
-| Do | Don't |
-|----|-------|
-| Face your palm toward the camera. | Turn your hand sideways (edge-on). |
-| Keep your hand in good lighting. | Work in dim or backlit conditions. |
-| Exaggerate finger positions for peace/L. | Make tiny or ambiguous gestures. |
-| Move hand decisively through zone boundaries. | Hover near zone edges (causes jitter). |
-| Hold your hand ~30–50 cm from the camera. | Hold too close (cuts off fingers) or too far. |
+Press **ESC** in the preview to quit.
 
 ---
 
-## Troubleshooting
+## Good habits
 
-| Problem | Likely cause | Fix |
-|---------|-------------|-----|
-| Nothing happens | No hand detected | Check lighting, webcam, face palm to camera. |
-| Wrong gesture detected | Gesture is ambiguous | Make the shape more clearly; check priority order. |
-| D-Pad activates when idle | Hand in wrong zone | Rest hand in center-left neutral zone. |
-| Movement jitters | Hand near zone boundary | Move hand more decisively left/right/up/down. |
-| Low FPS / lag | Camera resolution too high | Lower `width`/`height` in `config.toml`. |
-| Preview lags behind game | Focus switching | Normal — press ESC to close preview (`-NoPreview`). |
+| Do | Avoid |
+|---|---|
+| Face your palm to the camera | Hand edge-on |
+| Keep even lighting | Backlit or dark rooms |
+| Exaggerate peace / L shapes | Tiny ambiguous shapes |
+| Move decisively between zones | Hovering on a boundary |
+| Keep hands ~30–50 cm away | Too close (fingers clipped) or too far |
+| Keep the left hand left, right hand right | Crossing the midline repeatedly |
+
+If a gesture misfires, check the [tuning table](../README.md#symptom--setting) before editing code.

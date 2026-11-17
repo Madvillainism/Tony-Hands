@@ -1,4 +1,5 @@
 import tomllib
+import warnings
 from dataclasses import dataclass, field, fields
 from pathlib import Path
 
@@ -67,8 +68,26 @@ class Settings:
     retroarch: RetroArchSettings = field(default_factory=RetroArchSettings)
 
 
-def _fill(section_cls, raw: dict):
+SECTIONS = {
+    "camera": CameraSettings,
+    "inference": InferenceSettings,
+    "display": DisplaySettings,
+    "movement": MovementSettings,
+    "actions": ActionSettings,
+    "tracking": TrackingSettings,
+    "retroarch": RetroArchSettings,
+}
+
+
+def _fill(name: str, section_cls, raw: dict):
     valid = {f.name for f in fields(section_cls)}
+    unknown = sorted(set(raw) - valid)
+    if unknown:
+        warnings.warn(
+            f"Ignoring unknown option(s) in [{name}]: {', '.join(unknown)}. "
+            "Check config.toml for typos.",
+            stacklevel=2,
+        )
     return section_cls(**{k: v for k, v in raw.items() if k in valid})
 
 
@@ -76,14 +95,19 @@ def load_config(path: str | Path = "config.toml") -> Settings:
     settings = Settings()
     p = Path(path)
     if not p.exists():
+        warnings.warn(f"Config file not found: {p}. Using defaults.", stacklevel=2)
         return settings
     with p.open("rb") as f:
         raw = tomllib.load(f)
-    settings.camera = _fill(CameraSettings, raw.get("camera", {}))
-    settings.inference = _fill(InferenceSettings, raw.get("inference", {}))
-    settings.display = _fill(DisplaySettings, raw.get("display", {}))
-    settings.movement = _fill(MovementSettings, raw.get("movement", {}))
-    settings.actions = _fill(ActionSettings, raw.get("actions", {}))
-    settings.tracking = _fill(TrackingSettings, raw.get("tracking", {}))
-    settings.retroarch = _fill(RetroArchSettings, raw.get("retroarch", {}))
+
+    unknown_sections = sorted(set(raw) - set(SECTIONS))
+    if unknown_sections:
+        warnings.warn(
+            f"Ignoring unknown config section(s): {', '.join(unknown_sections)}. "
+            "Check config.toml for typos.",
+            stacklevel=2,
+        )
+
+    for name, section_cls in SECTIONS.items():
+        setattr(settings, name, _fill(name, section_cls, raw.get(name, {})))
     return settings

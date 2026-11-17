@@ -29,16 +29,45 @@ HAND_CONNECTIONS = [
 LEFT_COLOR = (255, 150, 0)
 RIGHT_COLOR = (0, 220, 255)
 
-user32 = ctypes.windll.user32
+RETROARCH_TITLE = "RetroArch"
+
+try:
+    user32 = ctypes.windll.user32
+except AttributeError:  # pragma: no cover - non-Windows platforms
+    user32 = None
+
+if user32 is not None:
+    _WINDOW_ENUM_PROC = ctypes.WINFUNCTYPE(
+        ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p
+    )
+else:  # pragma: no cover - non-Windows platforms
+    _WINDOW_ENUM_PROC = None
 
 
-def _find_retroarch() -> int | None:
-    return user32.FindWindowW(None, "RetroArch")
+def _find_retroarch(title: str = RETROARCH_TITLE) -> int | None:
+    """Return the first visible window whose title contains *title*."""
+    if user32 is None:
+        return None
+
+    found: list[int] = []
+
+    def _callback(hwnd, _lparam):
+        length = user32.GetWindowTextLengthW(hwnd)
+        if length and user32.IsWindowVisible(hwnd):
+            buffer = ctypes.create_unicode_buffer(length + 1)
+            user32.GetWindowTextW(hwnd, buffer, length + 1)
+            if title.lower() in buffer.value.lower():
+                found.append(hwnd)
+                return False
+        return True
+
+    user32.EnumWindows(_WINDOW_ENUM_PROC(_callback), 0)
+    return found[0] if found else None
 
 
 def _focus_retroarch() -> None:
     hwnd = _find_retroarch()
-    if hwnd:
+    if hwnd and user32.GetForegroundWindow() != hwnd:
         user32.ShowWindow(hwnd, 9)
         user32.SetForegroundWindow(hwnd)
         time.sleep(0.2)
@@ -122,10 +151,11 @@ class Pipeline:
                 if cv2.waitKey(1) & 0xFF == 27:
                     break
 
-            ra_hwnd = _find_retroarch()
-            if ra_hwnd:
-                user32.SwitchToThisWindow(ra_hwnd, True)
-                time.sleep(0.008)
+            if user32 is not None:
+                ra_hwnd = _find_retroarch()
+                if ra_hwnd and user32.GetForegroundWindow() != ra_hwnd:
+                    user32.SwitchToThisWindow(ra_hwnd, True)
+                    time.sleep(0.008)
 
             br_start = time.perf_counter()
             self._bridge.process(state)
@@ -158,6 +188,10 @@ class Pipeline:
     def stop(self) -> None:
         self._running = False
         self._webcam.stop()
+        try:
+            self._inference.close()
+        except Exception:
+            pass
         cv2.destroyAllWindows()
 
     def _load_button_icons(self) -> dict[str, np.ndarray]:
@@ -167,10 +201,12 @@ class Pipeline:
             if img is None:
                 return icons
             crops = {
-                "triangle": img[98:167, 12:81],
+                # ps-buttons.jpg is a diamond: triangle on top, square on the
+                # left, circle on the right, cross at the bottom.
+                "triangle": img[25:93, 95:163],
                 "circle": img[100:167, 177:244],
                 "cross": img[172:240, 93:161],
-                "square": img[25:93, 95:163],
+                "square": img[98:167, 12:81],
             }
             for name, crop in crops.items():
                 icons[name] = cv2.resize(crop, (48, 48), interpolation=cv2.INTER_AREA)

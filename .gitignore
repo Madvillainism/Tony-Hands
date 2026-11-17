@@ -15,4 +15,8 @@ diag_output.txt
 *.png
 *.jpg
 *.jpeg
-__pycache__/
+# The preview overlay uses this icon sheet, so keep it in the repo.
+!ps-buttons.jpg
+node_modules/
+dist/
+*.egg-info/
