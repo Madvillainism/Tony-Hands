@@ -31,7 +31,7 @@ export const GAME = Object.freeze({
 });
 
 // The page always opens in keyboard mode: no camera prompt on arrival, and the
-// WASD/IJKL mapping is ready immediately. Gestures remain opt-in via the toggle.
+// WASD/IJKL mapping is ready immediately. Hands remain opt-in via the toggle.
 export const DEPLOY = Object.freeze({
   autoStart: assets.autoStart === true,
   defaultMode: "keyboard",
@@ -54,11 +54,11 @@ export const CORES = Object.freeze([
 
 export const DEFAULT_CORE = "fast";
 
-// Vertical zones are tuned for the browser: the top/bottom third is enough
-// for Up/Down so a hand does not have to be raised to the edge of the frame.
+// Steering splits at the frame midline: any palm position left of center is
+// Left, right of center is Right, with no neutral band to park a hand in.
+// The top/bottom thirds trigger Up/Down; hysteresis applies to those zones.
 export const ZONES = Object.freeze({
-  left_max: 0.2,
-  right_min: 0.3,
+  split_x: 0.5,
   up_max: 0.35,
   down_min: 0.65,
   hysteresis: 0.05,
@@ -148,7 +148,8 @@ export const TOUCH = Object.freeze({
 });
 
 // The single keyboard mapping: WASD steers; I/J/K/L are grind/flip/ollie/grab;
-// O taps R2. Shoulders stay on Q/L1, E/R1, Tab/L2. This is the default on boot.
+// O taps R2 for a quick 180. L1/R1/L2 are deliberately unbound — Q, E and Tab
+// stay free for the browser and OS. This is the default on boot.
 //
 // Indices are EmulatorJS RetroPad indices; `value2` is kept from EmulatorJS's
 // own defaults so only the key changes. Players 1-3 must be present and empty:
@@ -166,9 +167,6 @@ export const KEYBOARD_CONTROLS = Object.freeze({
     7: { value: "d", value2: "DPAD_RIGHT" },
     8: { value: "l", value2: "BUTTON_1" }, // Circle — grab
     9: { value: "i", value2: "BUTTON_3" }, // Triangle — grind
-    10: { value: "q", value2: "LEFT_TOP_SHOULDER" },
-    11: { value: "e", value2: "RIGHT_TOP_SHOULDER" },
-    12: { value: "tab", value2: "LEFT_BOTTOM_SHOULDER" },
     13: { value: "o", value2: "RIGHT_BOTTOM_SHOULDER" },
   },
   1: {},
@@ -255,9 +253,6 @@ const ACTION_INDEX = Object.freeze({
   dpad_right: 7,
   circle: 8,
   triangle: 9,
-  l1: 10,
-  r1: 11,
-  l2: 12,
   r2: 13,
 });
 

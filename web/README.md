@@ -2,15 +2,15 @@
 
 **[Play it live: tony-hands.pages.dev](https://tony-hands.pages.dev)**
 
-Play Tony Hawk's Pro Skater **1 or 2** in the browser with **hand gestures or a
-keyboard**. The page runs [EmulatorJS](https://emulatorjs.org) and feeds it the
-same gesture state machines the desktop app uses via MediaPipe Hand Landmarker.
-Use the **Select game** card to switch between the two PS1 titles.
+Play Tony Hawk's Pro Skater **1 or 2** in the browser with **your hands or a
+keyboard**. The page runs [EmulatorJS](https://emulatorjs.org) and uses the
+same geometric gesture classifiers as the desktop app via MediaPipe Hand
+Landmarker. Use the **Select game** card to switch between the two PS1 titles.
 
 - No build step, no dependencies to install.
-- Gesture controls and a WASD/IJKL keyboard layout, remappable in-page.
+- Hands controls and a WASD/IJKL keyboard layout, remappable in-page.
 - Emulator-style on-screen buttons on touch devices — never the soft keyboard.
-- A separate gesture test bench at [`demo.html`](demo.html) for quick checks.
+- A separate hands test bench at [`demo.html`](demo.html) for quick checks.
 
 > **Public build vs local build:** the live site streams its game files from a
 > public asset host and boots straight into the game with keyboard controls.
@@ -30,7 +30,7 @@ python -m http.server 8000 --directory web
 ```
 
 Open <http://localhost:8000> to play, or <http://localhost:8000/demo.html> for
-the gesture test bench.
+the hands test bench.
 
 Any static server works:
 
@@ -60,11 +60,12 @@ files directly. On first boot EmulatorJS downloads its runtime and core from
 
 ## Controls
 
-The page opens in **Keyboard** mode. Switch to **Gestures** in the Input card
-to start the camera; switching back stops it. Touch devices are keyboard-only
-and show an on-screen pad instead.
+The page opens in **Keyboard** mode with the camera card hidden. Switch to
+**Hands** in the Input card to reveal it and start the camera; switching back
+stops it and hides the card again. Touch devices are keyboard-only and show an
+on-screen pad instead.
 
-### Gestures
+### Hands
 
 | Gesture | Button | Typical use |
 |---|---|---|
@@ -76,50 +77,64 @@ and show an on-screen pad instead.
 | ☝️ Point (left hand) | R2 tap | 120 ms press, 250 ms cooldown |
 | ✊ Fist | Release | Drops whatever is held |
 
-Gesture mode draws a lightweight **wireframe** of tracked hands (skeletons
+Hands mode draws a lightweight **wireframe** of tracked hands (skeletons
 only, no camera video) to keep CPU cost low. When no hands are visible the
 inference rate drops automatically; if MediaPipe falls back to CPU tracking a
 lighter quality tier is applied.
 
-The **left hand** steers using palm position: left/right/up/down zones with a
-5% hysteresis band, and both axes can be active at once for diagonals. The
-**right hand** performs the face-button gestures. Losing a hand releases all
-inputs so nothing sticks.
+The **left hand** steers by palm position: left of the frame midline is Left,
+right of it is Right, with no neutral band. The top and bottom thirds trigger
+Up/Down with a 5% hysteresis band, and both axes can be active at once for
+diagonals. The **right hand** performs the face-button gestures. Losing a hand
+releases all inputs so nothing sticks.
 
 ### Keyboard
 
-The default Skate layout (remap any key with the **Remap keys** dialog):
+The default Skate layout (remap any key with the **Remap keys** dialog). The
+same table, with keys that follow your remap, is on the game page under
+**Keyboard controls**:
 
-| Keys | Button |
-|---|---|
-| `W` `A` `S` `D` | D-Pad |
-| `K` | Cross · ollie |
-| `L` | Circle · grab |
-| `I` | Triangle · grind |
-| `J` | Square · flip |
-| `Q` / `E` / `Tab` / `O` | L1 / R1 / L2 / R2 |
-| `Enter` / `Shift` | Start / Select |
+| Key | Button | What it does in THPS |
+|---|---|---|
+| `W` `A` `S` `D` | D-Pad | Steer; move through menus |
+| `K` | Cross | Ollie — hold to crouch, release to jump |
+| `L` | Circle | Grab |
+| `I` | Triangle | Grind |
+| `J` | Square | Flip trick |
+| `O` | R2 | Quick tap for a 180° spin |
+| `Enter` | Start | Pause / start / confirm |
+| `Shift` | Select | Back out of menus |
 
-On a touch device, use the emulator-style on-screen buttons instead — they feed
-the same inputs and never raise the soft keyboard. EmulatorJS receives real key
-events in keyboard mode; the chips are a readout. The in-page **Trick sheet**
-dialog repeats both tables.
+`Q`, `E` and `Tab` are deliberately unbound. On a touch device, use the
+emulator-style on-screen buttons instead — they feed the same inputs and never
+raise the soft keyboard. EmulatorJS receives real key events in keyboard mode;
+the chips are a readout. The **Trick sheet** dialog covers hand shapes and
+zones, not the key layout.
+
+### Touch, landscape
+
+On a touch device turned sideways the page becomes a full-viewport game: the
+masthead, setup cards and footer are hidden, the emulator fills the screen, and
+the controls spread out like a PS1 controller — D-pad bottom-left, face buttons
+in a diamond bottom-right, shoulders across the top, Start/Select in the
+middle. The **Exit** button in the top corner restores the normal page;
+rotating back to portrait re-enables the full view.
 
 ---
 
-## Gesture test bench
+## Hands test bench
 
 Open [`demo.html`](demo.html) to check detection without booting a game. It
 uses the same detector, zones, and state machines, draws the full skeleton
 overlay, and lights chips for the inputs a game would receive. Press
 **Start camera** there; the play page starts the camera automatically when you
-choose Gestures mode and the game is running.
+choose Hands mode and the game is running.
 
 | Overlay element | Meaning |
 |---|---|
-| Yellow vertical line | Left / right hand split |
-| Solid grey lines | `left_max`, `right_min`, `up_max`, `down_min` |
-| Dotted grey lines | Hysteresis exits |
+| Yellow vertical line | Left / right hand split (steering midpoint) |
+| Solid grey lines | `up_max`, `down_min` |
+| Dotted grey lines | Vertical hysteresis exits |
 | Orange skeleton | Hand tracked as **left** |
 | Cyan skeleton | Hand tracked as **right** |
 | `fps · hands` | Inference rate and tracked hand count |
@@ -131,7 +146,7 @@ choose Gestures mode and the game is running.
 ```text
 web/
 ├── index.html          # play page (homepage): console, input toggle, trick sheet
-├── demo.html           # gesture test bench
+├── demo.html           # hands test bench
 ├── play.js             # play-page controller: files, boot, mode switch, chips
 ├── demo.js             # test-bench controller
 ├── emulator.js         # EmulatorJS bootstrap and file probes
@@ -144,14 +159,14 @@ web/
 └── fonts/              # bundled Anton (OFL)
 ```
 
-Tuning lives in [`config.js`](config.js): `ZONES` mirrors `[movement]` in
-`config.toml`, and `TRACKING.play` sets the in-game camera budget to 320×240 at
-20 fps. Change values there, not in the pipeline. `DESKTOP_CONTROLS` mirrors
-`src/bridge/key_mapper.py`.
+Tuning lives in [`config.js`](config.js): `ZONES` holds the browser steering
+split and vertical thresholds (the desktop app still uses `config.toml` with a
+neutral band), and `TRACKING.play` sets the in-game camera budget to 320×240 at
+12 fps by default. Change values there, not in the pipeline.
 
 ### Differences from the desktop app
 
-- **Emulation runs in the tab.** Gestures become RetroPad inputs via
+- **Emulation runs in the tab.** Hand gestures become RetroPad inputs via
   `gameManager.simulateInput()`; no keys are injected into other windows.
 - **Camera starts on game start**, so the permission prompt never covers the
   boot screen. During play the camera runs small and slow to leave the CPU to
@@ -172,7 +187,7 @@ Tuning lives in [`config.js`](config.js): `ZONES` mirrors `[movement]` in
 | "Loading hand model…" never finishes | The CDN is blocked; check DevTools → Network |
 | Black game screen | Bring the Chrome window to the front — occluded tabs throttle rAF to ~1 fps |
 | Slow first boot | The ~600 MB disc image is read from localhost; later boots are faster |
-| Gestures misfire | Face your palm to the camera in even light; exaggerate the shape |
+| A hand shape misfires | Face your palm to the camera in even light; exaggerate the shape |
 | Nothing detected | Check the green status dot and that the test bench shows `fps` above 0 |
 
 ---
@@ -292,10 +307,10 @@ confirm the game reaches the title screen with no CORS errors in DevTools.
 ## Status
 
 - [x] Camera + MediaPipe WASM + wireframe hand readout
-- [x] Gesture test bench (`demo.html`)
+- [x] Hands test bench (`demo.html`)
 - [x] Playable THPS 1 and THPS 2 with a game selector
-- [x] Gesture / keyboard toggle, in-page key remapping
-- [x] Touch on-screen pad, pause gesture, CPU-friendly quality tiers
+- [x] Hands / keyboard toggle, in-page key remapping and on-page key guide
+- [x] Full-viewport landscape touch pad, pause gesture, CPU-friendly quality tiers
 - [ ] Browser as a wireless controller for desktop RetroArch (idea)
 - [x] Live at [tony-hands.pages.dev](https://tony-hands.pages.dev) (Cloudflare Pages + R2 — recipe above)
 

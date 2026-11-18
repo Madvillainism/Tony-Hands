@@ -50,8 +50,9 @@ The browser player ([tony-hands.pages.dev](https://tony-hands.pages.dev)) plays
 EmulatorJS's `pcsx_rearmed` core. The **Select game** card switches between them;
 inputs go straight to the emulator (no window focus needed). Locally, copy your
 own disc images and BIOS into `web/games/` and open <http://localhost:8000>. The
-Input card switches between gestures and the keyboard map above; on touch
-devices an on-screen pad replaces the keyboard. Other disc-based systems would
+Input card switches between Hands mode and the keyboard map above (Q, E and Tab
+are unbound); on touch devices an on-screen pad replaces the keyboard and turns
+into a full-viewport PS1-style layout in landscape. Other disc-based systems would
 need their own EmulatorJS core and local files; see
 [web/README.md](../web/README.md).
 

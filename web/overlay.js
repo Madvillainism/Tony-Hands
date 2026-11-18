@@ -104,15 +104,6 @@ function drawZones(ctx, zones, width, height) {
   ctx.lineTo(x(0.5), height);
   ctx.stroke();
 
-  ctx.strokeStyle = COLORS.zone;
-  ctx.lineWidth = 1;
-  for (const value of [zones.left_max, zones.right_min]) {
-    ctx.beginPath();
-    ctx.moveTo(x(value), 0);
-    ctx.lineTo(x(value), height);
-    ctx.stroke();
-  }
-
   ctx.beginPath();
   ctx.moveTo(0, y(zones.up_max));
   ctx.lineTo(x(0.5), y(zones.up_max));
@@ -124,12 +115,6 @@ function drawZones(ctx, zones, width, height) {
   ctx.save();
   ctx.setLineDash([2, 8]);
   ctx.strokeStyle = COLORS.hairline;
-  for (const value of [zones.left_max + zones.hysteresis, zones.right_min - zones.hysteresis]) {
-    ctx.beginPath();
-    ctx.moveTo(x(value), 0);
-    ctx.lineTo(x(value), height);
-    ctx.stroke();
-  }
   for (const value of [zones.up_max + zones.hysteresis, zones.down_min - zones.hysteresis]) {
     ctx.beginPath();
     ctx.moveTo(0, y(value));
@@ -140,9 +125,8 @@ function drawZones(ctx, zones, width, height) {
 
   label(ctx, "MOVE", 10, 22, COLORS.split);
   label(ctx, "ACTIONS", x(0.5) + 10, 22, COLORS.split);
-  label(ctx, "L", x(zones.left_max) - 18, height - 14, COLORS.split);
-  label(ctx, "N", (x(zones.left_max) + x(zones.right_min)) / 2 - 5, height - 14, COLORS.zone);
-  label(ctx, "R", x(zones.right_min) + 6, height - 14, COLORS.split);
+  label(ctx, "L", 10, height - 14, COLORS.split);
+  label(ctx, "R", x(0.5) + 10, height - 14, COLORS.split);
   label(ctx, "U", 8, y(zones.up_max) - 6, COLORS.split);
   label(ctx, "D", 8, y(zones.down_min) + 14, COLORS.split);
 }

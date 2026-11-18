@@ -107,9 +107,6 @@ test("single keyboard mapping is WASD/IJKL/O with unique keys", () => {
     7: "d", // D-pad right
     8: "l", // Circle / grab
     9: "i", // Triangle / grind
-    10: "q", // L1
-    11: "e", // R1
-    12: "tab", // L2
     13: "o", // R2
   };
   for (const [index, value] of Object.entries(expected)) {
@@ -117,6 +114,9 @@ test("single keyboard mapping is WASD/IJKL/O with unique keys", () => {
   }
   const names = Object.values(p).map((entry) => entry.value);
   assert.equal(new Set(names).size, names.length, "no duplicate keys");
+  assert.equal(names.includes("q"), false, "Q is unbound");
+  assert.equal(names.includes("e"), false, "E is unbound");
+  assert.equal(names.includes("tab"), false, "Tab is unbound");
 });
 
 test("key conversion helpers round-trip", () => {
@@ -152,10 +152,9 @@ test("remap validation rejects reserved and duplicate keys", () => {
   assert.equal(conflictWith({}, "circle", "KeyG"), false);
 });
 
-test("vertical zones are tighter than the desktop defaults", () => {
+test("steering splits at the midline with no neutral band", () => {
   assert.deepEqual(ZONES, {
-    left_max: 0.2,
-    right_min: 0.3,
+    split_x: 0.5,
     up_max: 0.35,
     down_min: 0.65,
     hysteresis: 0.05,

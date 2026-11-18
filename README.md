@@ -12,7 +12,7 @@ Tony-Hands watches your hands with [MediaPipe](https://github.com/google-ai-edge
 > **Platform:** Windows 10/11 · **Latency target:** 30 FPS (33 ms/frame) · **Camera:** any webcam
 
 > **Play in your browser:** [tony-hands.pages.dev](https://tony-hands.pages.dev)
-> — gesture/keyboard toggle, no install. The source is on the `feat/web` branch;
+> — hands/keyboard toggle, no install. The source is on the `feat/web` branch;
 > see [Web version](#web-version) and [web/README.md](web/README.md).
 
 ---
@@ -423,8 +423,9 @@ Details, latency budget, and the module map are in **[docs/SETUP.md](docs/SETUP.
 There is a **playable browser version** in **`web/`**, live at
 **[tony-hands.pages.dev](https://tony-hands.pages.dev)**. It runs **THPS 1 and
 THPS 2** (the original PS1 games) through EmulatorJS, with a game selector and
-a choice of hand gestures or the WASD/IJKL keyboard layout. No install, no
-Python, no account. Touch devices get an on-screen pad instead of the keyboard.
+a choice of hand control or the WASD/IJKL keyboard layout. No install, no
+Python, no account. Touch devices get an on-screen pad instead of the keyboard,
+and a full-viewport PS1-style layout in landscape.
 
 ```powershell
 # from the repository root
@@ -437,23 +438,25 @@ and BIOS in `web/games/` (see [web/games/README.md](web/games/README.md)). The
 public site instead streams those files from its own asset host.
 
 The camera API requires a secure context, so `localhost` or HTTPS is mandatory —
-opening `index.html` from disk will not work. For a quick gesture check without
+opening `index.html` from disk will not work. For a quick hands check without
 booting a game, open <http://localhost:8000/demo.html>.
 
-The gesture classifier and state machines in `web/gestures.js` are a direct port
-of `src/`, with the same thresholds.
+The hand classifiers in `web/gestures.js` are ported from `src/`. The web build
+deliberately differs in one place: steering splits at the frame midline with no
+neutral band, and `Q`, `E` and `Tab` are left unbound. The full key-by-key guide
+is on the game page under **Keyboard controls**.
 
 | Status | Feature |
 |---|---|
 | ✅ Done | Browser camera + MediaPipe WASM + zone overlay + input readout |
-| ✅ Done | Gesture test bench (`demo.html`) |
+| ✅ Done | Hands test bench (`demo.html`) |
 | ✅ Done | Play THPS 1 and 2 in the browser, with a game selector |
-| ✅ Done | Gesture/keyboard toggle, key remapping, touch pad, pause gesture |
+| ✅ Done | Hands/keyboard toggle, key guide + remapping, landscape touch pad, pause gesture |
 | ✅ Done | Live deployment at [tony-hands.pages.dev](https://tony-hands.pages.dev) |
 | 💡 Idea | Browser as a wireless controller for desktop RetroArch (WebSocket bridge) |
 
 The live build boots straight into the game with keyboard controls and starts
-the camera only when you choose Gestures. The deployment recipe is in
+the camera only when you choose Hands. The deployment recipe is in
 **[web/README.md](web/README.md#deploying-to-cloudflare-pages--r2)**; local
 development uses `web/games/` and a manual boot gate.
 

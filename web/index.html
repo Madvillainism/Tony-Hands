@@ -2,11 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
     <title>Play — Tony-Hands</title>
     <meta
       name="description"
-      content="Play Tony Hawk's Pro Skater in the browser with hand gestures or the keyboard."
+      content="Play Tony Hawk's Pro Skater in the browser with your hands or the keyboard."
     />
     <meta name="color-scheme" content="dark" />
     <link
@@ -25,7 +28,7 @@
     <script src="./deploy-config.js"></script>
     <script type="module" src="./play.js"></script>
   </head>
-  <body class="page page--play">
+  <body class="page page--play" data-mode="keyboard">
     <a class="skip-link" href="#console-title">Skip to the game</a>
 
     <header class="masthead">
@@ -35,7 +38,7 @@
           <span class="brand__name">Tony-Hands</span>
         </a>
         <nav class="bar__nav" aria-label="Site">
-          <a class="pill" href="./demo.html">Gesture test</a>
+          <a class="pill" href="./demo.html">Hands test</a>
           <button class="pill" type="button" data-open-dialog="tricks" aria-haspopup="dialog">
             Trick sheet
           </button>
@@ -112,6 +115,15 @@
               </div>
             </div>
 
+            <button
+              class="landscape-exit"
+              id="landscape-exit"
+              type="button"
+              aria-label="Exit full screen game view"
+            >
+              Exit <span aria-hidden="true">×</span>
+            </button>
+
             <div class="cab__scanlines" aria-hidden="true"></div>
           </div>
 
@@ -148,7 +160,7 @@
             <p class="card__hint">Changing game reloads the player.</p>
           </section>
 
-          <section class="card">
+          <section class="card" id="hands-card">
             <h2 class="card__title">Hands</h2>
             <div class="preview">
               <canvas
@@ -159,7 +171,7 @@
                 aria-label="Wireframe view of tracked hands."
               ></canvas>
               <p class="preview__off" id="preview-off">
-                Camera off. Switch to gestures to turn it on.
+                Camera off. Switch to Hands to turn it on.
               </p>
             </div>
           </section>
@@ -170,7 +182,7 @@
               <legend class="visually-hidden">Control scheme</legend>
               <label class="segmented__opt">
                 <input type="radio" name="control-mode" value="gestures" id="mode-gestures" />
-                <span>Gestures</span>
+                <span>Hands</span>
               </label>
               <label class="segmented__opt">
                 <input type="radio" name="control-mode" value="keyboard" />
@@ -179,7 +191,7 @@
             </fieldset>
             <h3 class="card__sub">Keyboard layout</h3>
             <p class="card__hint">
-              WASD to steer · I/J/K/L for tricks · O for R2.
+              Every key and what it does in the game is listed below.
             </p>
             <p class="card__hint" id="mode-hint" aria-live="polite">
               Pick how you want to ride.
@@ -188,11 +200,84 @@
               <button class="btn btn--ghost" type="button" data-open-dialog="remap" aria-haspopup="dialog">
                 Remap keys
               </button>
-              <a class="btn btn--ghost" href="./demo.html">Test gestures</a>
+              <a class="btn btn--ghost" href="./demo.html">Test hands</a>
               <button class="btn btn--ghost" id="release" type="button">
                 Release
               </button>
             </div>
+          </section>
+
+          <section class="card" id="key-guide">
+            <h2 class="card__title">Keyboard controls</h2>
+            <div
+              class="table-wrapper"
+              role="region"
+              aria-labelledby="key-guide-caption"
+              tabindex="0"
+            >
+              <table class="key-guide">
+                <caption id="key-guide-caption" class="visually-hidden">
+                  Keyboard keys, their PlayStation buttons, and what each one does in Tony Hawk's Pro Skater
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Key</th>
+                    <th scope="col">PS button</th>
+                    <th scope="col">What it does</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">
+                      <kbd data-key-for="dpad_up">W</kbd>
+                      <kbd data-key-for="dpad_left">A</kbd>
+                      <kbd data-key-for="dpad_down">S</kbd>
+                      <kbd data-key-for="dpad_right">D</kbd>
+                    </th>
+                    <td>D-Pad</td>
+                    <td>Steer the board; move through menus.</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><kbd data-key-for="cross">K</kbd></th>
+                    <td>Cross</td>
+                    <td>Ollie — hold to crouch, release to jump.</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><kbd data-key-for="circle">L</kbd></th>
+                    <td>Circle</td>
+                    <td>Grab — hold it in the air for a grab trick.</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><kbd data-key-for="triangle">I</kbd></th>
+                    <td>Triangle</td>
+                    <td>Grind — lock onto a rail or ledge.</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><kbd data-key-for="square">J</kbd></th>
+                    <td>Square</td>
+                    <td>Flip trick — kickflips and heelflips.</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><kbd data-key-for="r2">O</kbd></th>
+                    <td>R2</td>
+                    <td>A quick tap spins you 180°.</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><kbd data-key-for="start">Enter</kbd></th>
+                    <td>Start</td>
+                    <td>Pause, start a session, confirm menus.</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><kbd data-key-for="select">Shift</kbd></th>
+                    <td>Select</td>
+                    <td>Back out of menus.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="card__hint">
+              Remap any key above — this list follows your bindings.
+            </p>
           </section>
 
         </aside>
@@ -207,8 +292,9 @@
             <p class="ride__index" aria-hidden="true">1</p>
             <h3>Steer with the left hand</h3>
             <p>
-              Hold it in the left half of the frame and move to an edge for a
-              direction. Diagonals work: the axes are independent.
+              Left of the frame midline steers left; right of it steers right.
+              The top and bottom thirds handle up and down, and both axes work
+              together for diagonals.
             </p>
           </li>
           <li class="ride__step">
@@ -230,7 +316,7 @@
           </li>
         </ol>
         <p class="ride__foot">
-          Full sheet, including the keyboard layout:
+          Full sheet of hand shapes and zones:
           <button class="pill pill--inline" type="button" data-open-dialog="tricks" aria-haspopup="dialog">
             open the trick sheet
           </button>
@@ -274,7 +360,7 @@
 
         <div class="sheet__body">
           <section>
-            <h3 class="sheet__sub">Gestures</h3>
+            <h3 class="sheet__sub">Hands</h3>
             <ul class="tricks">
               <li class="trick">
                 <span class="trick__glyph" aria-hidden="true">✋</span>
@@ -322,32 +408,25 @@
           </section>
 
           <section>
-            <h3 class="sheet__sub">Keyboard, same as the desktop app</h3>
-            <ul class="keys">
-              <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>D-Pad</span></li>
-              <li><kbd>K</kbd><span>Cross · ollie</span></li>
-              <li><kbd>L</kbd><span>Circle · grab</span></li>
-              <li><kbd>I</kbd><span>Triangle · grind</span></li>
-              <li><kbd>J</kbd><span>Square · flip</span></li>
-              <li><kbd>Q</kbd><span>L1</span></li>
-              <li><kbd>E</kbd><span>R1</span></li>
-              <li><kbd>O</kbd><span>R2</span></li>
-              <li><kbd>Enter</kbd><span>Start</span></li>
-              <li><kbd>Shift</kbd><span>Select</span></li>
-            </ul>
+            <h3 class="sheet__sub">Keyboard</h3>
+            <p class="sheet__text">
+              Every key, its PlayStation button, and what it does in the game
+              are listed on the game page under
+              <strong>Keyboard controls</strong>.
+            </p>
           </section>
 
           <section>
             <h3 class="sheet__sub">Zones</h3>
             <p class="sheet__text">
-              The left half of the frame is a 3×3 pad: 20% from the left edge is
-              <strong>left</strong>, 30% from the right edge is
-              <strong>right</strong>, the top third is <strong>up</strong> and
-              the bottom third is <strong>down</strong>. Each zone has a 5%
-              hysteresis band so the edge of a zone cannot flicker.
+              The left half of the frame is a 3×3 pad. Left of the midline is
+              <strong>left</strong>, right of it is <strong>right</strong> —
+              there is no neutral band. The top third is <strong>up</strong>
+              and the bottom third is <strong>down</strong>, with a 5%
+              hysteresis band so the edge of a vertical zone cannot flicker.
             </p>
             <p class="sheet__text">
-              Move deliberately between zones to avoid accidental turns.
+              Both axes work at once, so diagonals are possible.
             </p>
           </section>
         </div>
@@ -359,7 +438,7 @@
         <header class="sheet__head">
           <h2 class="sheet__title" id="intro-title">Ride with your hands</h2>
           <form method="dialog">
-            <button class="sheet__close" type="submit" aria-label="Close the gesture introduction">×</button>
+            <button class="sheet__close" type="submit" aria-label="Close the hands introduction">×</button>
           </form>
         </header>
         <div class="sheet__body">
@@ -372,7 +451,7 @@
             <li class="intro__demo">
               <span class="intro__hand intro__hand--slide" aria-hidden="true">☝️</span>
               <span class="chip">D-Pad</span>
-              <p>Left palm moves to an edge of the zone grid to steer.</p>
+              <p>Left of the frame steers left; right of center steers right.</p>
             </li>
             <li class="intro__demo">
               <span class="intro__hand intro__hand--cycle" aria-hidden="true">✌️</span>
@@ -419,9 +498,6 @@
             <li><button type="button" data-capture="circle">Circle · grab</button></li>
             <li><button type="button" data-capture="triangle">Triangle · grind</button></li>
             <li><button type="button" data-capture="square">Square · flip</button></li>
-            <li><button type="button" data-capture="l1">L1</button></li>
-            <li><button type="button" data-capture="r1">R1</button></li>
-            <li><button type="button" data-capture="l2">L2</button></li>
             <li><button type="button" data-capture="r2">R2</button></li>
             <li><button type="button" data-capture="start">Start</button></li>
             <li><button type="button" data-capture="select">Select</button></li>

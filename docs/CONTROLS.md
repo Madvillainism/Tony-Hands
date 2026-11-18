@@ -113,21 +113,31 @@ If a gesture misfires, check the [tuning table](../README.md#symptom--setting) b
 
 The browser player (live at [tony-hands.pages.dev](https://tony-hands.pages.dev),
 or `http://localhost:8000` after `python -m http.server 8000 --directory web`)
-always opens in **Keyboard** mode with the Skate layout, so no camera prompt
-appears on arrival. The **Select game** card switches between THPS (1999) and
-THPS 2 (2000) — changing games reloads the player. Choose **Gestures** to switch
-to hand control; the camera starts only then. The keys:
+always opens in **Keyboard** mode with the Skate layout and the camera card
+hidden, so no camera prompt appears on arrival. The **Select game** card
+switches between THPS (1999) and THPS 2 (2000) — changing games reloads the
+player. Choose **Hands** in the Input card to reveal the camera card and switch
+to hand control; switching back hides it. Steering has no neutral band: left of
+the frame midline is Left, right of it is Right. The keys:
 
-| Keys | Button |
-|---|---|
-| `W` `A` `S` `D` | D-Pad |
-| `K` / `L` / `I` / `J` | Cross (ollie) / Circle (grab) / Triangle (grind) / Square (flip) |
-| `Q` / `E` / `Tab` / `O` | L1 / R1 / L2 / R2 |
-| `Enter` / `Shift` | Start / Select |
+| Key | Button | What it does in THPS |
+|---|---|---|
+| `W` `A` `S` `D` | D-Pad | Steer; move through menus |
+| `K` | Cross | Ollie — hold to crouch, release to jump |
+| `L` | Circle | Grab |
+| `I` | Triangle | Grind |
+| `J` | Square | Flip trick |
+| `O` | R2 | Quick tap for a 180° spin |
+| `Enter` | Start | Pause / start / confirm |
+| `Shift` | Select | Back out of menus |
 
-The **Remap keys** dialog rebinds any button (applies immediately). On touch
-devices the keyboard toggle is hidden and an emulator-style on-screen pad
-appears — no soft keyboard. Open <http://localhost:8000/demo.html> for the
-gesture test bench — it draws the full skeleton overlay and lights chips without
-booting a game. The in-page **Trick sheet** dialog repeats both tables. See
-[web/README.md](../web/README.md) for setup and troubleshooting.
+`Q`, `E` and `Tab` are deliberately unbound. The full key-by-key guide lives on
+the game page under **Keyboard controls** and follows your remaps; the
+**Remap keys** dialog applies changes immediately. On touch devices the keyboard
+toggle is hidden and an emulator-style on-screen pad appears — no soft keyboard.
+Turning a touch device sideways gives a full-viewport game with a PS1-style pad
+(D-pad left, face diamond right, shoulders on top, Start/Select in the middle)
+and an Exit button to restore the page. Open <http://localhost:8000/demo.html>
+for the hands test bench — it draws the full skeleton overlay and lights chips
+without booting a game. See [web/README.md](../web/README.md) for setup and
+troubleshooting.

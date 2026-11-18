@@ -47,6 +47,8 @@ const els = {
   video: document.getElementById("camera"),
   remap: document.getElementById("remap"),
   touchPad: document.getElementById("touch-pad"),
+  keyGuideCells: [...document.querySelectorAll("#key-guide [data-key-for]")],
+  landscapeExit: document.getElementById("landscape-exit"),
 };
 
 const touch = isTouchDevice();
@@ -200,7 +202,7 @@ function handleEngineStatus(status) {
       setModeHint(
         status.text?.includes("tracking")
           ? status.text
-          : `Gesture mode · ${delegate} tracking. Left hand steers, right hand tricks.`,
+          : `Hands mode · ${delegate} tracking. Left hand steers, right hand tricks.`,
       );
     }
     els.previewOff.hidden = true;
@@ -256,7 +258,7 @@ function releaseEverything(message) {
 // -------------------------------------------------------------------- mode
 
 function applyMode(mode, { activateCamera = false } = {}) {
-  // Touch devices are keyboard-only: the on-screen pad replaces gestures.
+  // Touch devices are keyboard-only: the on-screen pad replaces hands control.
   if (touch && mode === "gestures") mode = "keyboard";
   state.mode = mode;
   for (const radio of els.modeRadios) radio.checked = radio.value === mode;
@@ -265,13 +267,13 @@ function applyMode(mode, { activateCamera = false } = {}) {
     stopEngine();
     releaseEverything();
     els.previewOff.hidden = false;
-    setModeHint("Keyboard — WASD to steer, I/J/K/L for tricks, O for R2.");
+    setModeHint("Keyboard — WASD to steer; full key guide below.");
     document.body.dataset.mode = "keyboard";
     // EJS binds keys to #game; refocus after UI clicks so keys work. On touch
     // devices focusing #game can raise the soft keyboard — never do it there.
     if (!touch && state.booted) document.querySelector("#game")?.focus();
   } else {
-    setModeHint("Gesture mode. Left hand steers, right hand tricks.");
+    setModeHint("Hands mode. Left hand steers, right hand tricks.");
     document.body.dataset.mode = "gestures";
     if (activateCamera) startEngine();
   }
@@ -282,7 +284,7 @@ function applyMode(mode, { activateCamera = false } = {}) {
 function applyDelegateQuality(delegate) {
   state.engine?.setQuality?.(delegate === "CPU" ? "cpu" : null);
   if (delegate === "CPU") {
-    setModeHint("Gesture mode · CPU tracking. Lowered to a lighter tier.");
+    setModeHint("Hands mode · CPU tracking. Lowered to a lighter tier.");
   }
 }
 
@@ -310,7 +312,7 @@ async function refreshFiles(game = selectedGame) {
   if (result.ready) {
     els.gateTitle.textContent = "Ready to ride";
     els.gateNote.textContent = DEPLOY.autoStart
-      ? "Loading the game. Switch to Gestures any time to play with your hands."
+      ? "Loading the game. Switch to Hands any time to play with your hands."
       : "Ready when you are.";
     els.gateHint.textContent = "Ready";
     els.boot.disabled = state.booted;
@@ -437,8 +439,19 @@ function renderRemapRows() {
   }
 }
 
+// The on-page guide shows the live binding, not a frozen default, so a remap
+// can never make the explanations lie.
+function renderKeyGuide() {
+  for (const cell of els.keyGuideCells) {
+    const action = cell.dataset.keyFor;
+    const code = remap[action] ?? keyNameToCode(KEYBOARD_CONTROLS[0][PAD[action]]?.value);
+    cell.textContent = code ? prettyKey(code) : "—";
+  }
+}
+
 function prettyKey(code) {
   if (!code) return "—";
+  if (code === "ShiftLeft" || code === "ShiftRight") return "Shift";
   return code
     .replace(/^Key/, "")
     .replace(/^Digit/, "")
@@ -472,6 +485,7 @@ function captureKey(action, button) {
     keyToAction = deriveKeyMap(buildControls(remap));
     applyRemapLive();
     renderRemapRows();
+    renderKeyGuide();
     announce(`${ACTION_LABELS[action] ?? action} is now ${prettyKey(event.code)}`);
     end();
   };
@@ -480,6 +494,7 @@ function captureKey(action, button) {
     button.removeAttribute("data-capturing");
     document.removeEventListener("keydown", onKey, true);
     renderRemapRows();
+    renderKeyGuide();
     button.focus();
   }
 
@@ -517,6 +532,20 @@ els.release.addEventListener("click", () => {
   setModeHint("All inputs released. Nothing is held down.");
 });
 
+// Landscape touch devices get a full-viewport game layout. The exit control
+// restores the page until the device rotates back to portrait.
+els.landscapeExit?.addEventListener("click", () => {
+  document.body.dataset.landscapeDismissed = "true";
+  releaseEverything();
+  const portrait = window.matchMedia("(orientation: portrait)");
+  const clearDismiss = () => {
+    delete document.body.dataset.landscapeDismissed;
+    portrait.removeEventListener("change", clearDismiss);
+  };
+  if (portrait.matches) clearDismiss();
+  else portrait.addEventListener("change", clearDismiss, { once: true });
+});
+
 document.addEventListener("keydown", (event) => {
   if (state.mode !== "keyboard") return;
   if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
@@ -544,6 +573,7 @@ if (els.remap) {
   });
   renderRemapRows();
 }
+renderKeyGuide();
 
 wireDialogs();
 
@@ -560,7 +590,7 @@ window.addEventListener("pagehide", () => {
 
 if (touch) {
   document.body.dataset.input = "touch";
-  // Hide the Gestures option entirely on touch devices: camera + MediaPipe +
+  // Hide the Hands option entirely on touch devices: camera + MediaPipe +
   // emulator together are too heavy, and the pad is keyboard-mode only.
   const gesturesRadio = document.getElementById("mode-gestures");
   if (gesturesRadio) {
