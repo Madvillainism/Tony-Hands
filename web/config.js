@@ -120,13 +120,6 @@ export const STORAGE_KEYS = Object.freeze({
   core: "tony-hands:core",
   remap: "tony-hands:key-remap",
   game: "tony-hands:game",
-  audioMuted: "tony-hands:audio-muted",
-});
-
-// The page owns game audio: one switch at boot, no conflicting EmulatorJS UI.
-export const AUDIO = Object.freeze({
-  volume: 0.6,
-  defaultMuted: false,
 });
 
 // URL ?game= wins over a remembered pick, then the registry default.

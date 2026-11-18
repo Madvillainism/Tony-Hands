@@ -141,8 +141,7 @@ For menus, use only the left hand as a D-Pad (left/right edges, top and bottom
 thirds for Up/Down) and rest in the middle band to stop steering. Raise an open
 palm so all fingers are visible to press Cross (X) and confirm; the peace sign
 is Triangle and backs out. This walkthrough is repeated in the animated hands
-intro and the Trick sheet. The cabinet status bar's **Sound on / Sound off**
-button is the single game-audio control; its choice is saved and applied at boot.
+intro and the Trick sheet.
 
 On touch devices the keyboard
 toggle is hidden and an emulator-style on-screen pad appears — no soft keyboard.

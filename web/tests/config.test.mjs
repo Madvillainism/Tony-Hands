@@ -22,7 +22,6 @@ const {
   STORAGE_KEYS,
   MEDIAPIPE,
   HAND_TRACKING,
-  AUDIO,
 } = await loadModule("../config.js");
 
 test("game registry holds both PS1 titles with a selector default", () => {
@@ -61,11 +60,6 @@ test("MediaPipe thresholds are config-driven", () => {
   assert.equal(MEDIAPIPE.minTrackingConfidence, 0.4);
   assert.equal(MEDIAPIPE.idleFps, 4);
   assert.equal(MEDIAPIPE.idleAfterMs, 2000);
-});
-
-test("audio is controlled by one persisted page toggle", () => {
-  assert.equal(STORAGE_KEYS.audioMuted, "tony-hands:audio-muted");
-  assert.deepEqual(AUDIO, { volume: 0.6, defaultMuted: false });
 });
 
 test("hand tracking uses a generous match radius and quick stale eviction", () => {

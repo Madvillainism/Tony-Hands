@@ -98,14 +98,6 @@ visible — that is Cross (X) and confirms. The peace sign is Triangle and backs
 out; thumbs-down opens the game's pause menu. The same walkthrough is in the animated hands intro
 shown when you select Hands and in the Trick sheet.
 
-### Audio
-
-The **Sound on / Sound off** button in the cabinet status bar is the only game
-audio control. It is saved for next time and sets EmulatorJS's volume at boot,
-hiding EJS's own mute/volume UI so the two cannot disagree. Muting zeroes the
-audio output; it does not stop the core generating sound, so the main benefit is
-cleaner audio on devices with buggy output rather than a large CPU saving.
-
 ### Keyboard
 
 The default Skate layout (remap any key with the **Remap keys** dialog). Open the
