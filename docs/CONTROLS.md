@@ -113,12 +113,14 @@ If a gesture misfires, check the [tuning table](../README.md#symptom--setting) b
 
 The browser player (live at [tony-hands.pages.dev](https://tony-hands.pages.dev),
 or `http://localhost:8000` after `python -m http.server 8000 --directory web`)
-always opens in **Keyboard** mode with the Skate layout and the camera card
-hidden, so no camera prompt appears on arrival. The **Select game** card
-switches between THPS (1999) and THPS 2 (2000) — changing games reloads the
-player. Choose **Hands** in the Input card to reveal the camera card and switch
-to hand control; switching back hides it. Steering has no neutral band: left of
-the frame midline is Left, right of it is Right. The keys:
+always opens in **Keyboard** mode with the Skate layout, the camera card and the
+cabinet's Live input chips hidden, so no camera prompt appears on arrival. The
+**Select game** card switches between THPS (1999) and THPS 2 (2000) — changing
+games reloads the player. Choose **Hands** in the Input card to reveal the camera
+card and the chips and switch to hand control; switching back hides both. The
+animated hands instructions appear on every selection, before the camera is
+requested. Steering uses a neutral band: `x < 0.20` is Left, `x > 0.30` is Right,
+and the middle band does nothing. The keys:
 
 | Key | Button | What it does in THPS |
 |---|---|---|
@@ -131,13 +133,22 @@ the frame midline is Left, right of it is Right. The keys:
 | `Enter` | Start | Pause / start / confirm |
 | `Shift` | Select | Back out of menus |
 
-`Q`, `E` and `Tab` are deliberately unbound. The full key-by-key guide lives on
-the game page under **Keyboard controls** and follows your remaps; the
-**Remap keys** dialog applies changes immediately. On touch devices the keyboard
+`Q`, `E` and `Tab` are deliberately unbound. The full key-by-key guide is a
+collapsed **Keyboard controls** disclosure on the game page and follows your
+remaps; the **Remap keys** dialog applies changes immediately.
+
+For menus, use only the left hand as a D-Pad (left/right edges, top and bottom
+thirds for Up/Down) and rest in the middle band to stop steering. Raise an open
+palm so all fingers are visible to press Cross (X) and confirm; the peace sign
+is Triangle and backs out. This walkthrough is repeated in the animated hands
+intro and the Trick sheet.
+
+On touch devices the keyboard
 toggle is hidden and an emulator-style on-screen pad appears — no soft keyboard.
 Turning a touch device sideways gives a full-viewport game with a PS1-style pad
 (D-pad left, face diamond right, shoulders on top, Start/Select in the middle)
 and an Exit button to restore the page. Open <http://localhost:8000/demo.html>
 for the hands test bench — it draws the full skeleton overlay and lights chips
-without booting a game. See [web/README.md](../web/README.md) for setup and
-troubleshooting.
+without booting a game. The deployed build loads an optional main-menu savestate
+so the publisher videos are skipped; see [web/README.md](../web/README.md) for
+setup, savestate notes and troubleshooting.

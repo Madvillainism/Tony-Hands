@@ -215,12 +215,14 @@ export class HandTracker {
 
 export class MovementStateMachine {
   constructor({
-    splitX = 0.5,
+    leftMax = 0.2,
+    rightMin = 0.3,
     upMax = 0.35,
     downMin = 0.65,
     hysteresis = 0.05,
   } = {}) {
-    this.splitX = splitX;
+    this.leftMax = leftMax;
+    this.rightMin = rightMin;
     this.upMax = upMax;
     this.downMin = downMin;
     this.hysteresis = hysteresis;
@@ -230,12 +232,19 @@ export class MovementStateMachine {
 
   update(x, y) {
     const events = [];
-    // No neutral band: a hand on either side of the midline always steers,
-    // and crossing it swaps the held direction in one update.
-    const nextH = x < this.splitX ? "left" : "right";
+    let nextH = this.h;
+    if (this.h === "left") {
+      nextH = x >= this.leftMax + this.hysteresis ? "neutral" : "left";
+    } else if (this.h === "right") {
+      nextH = x <= this.rightMin - this.hysteresis ? "neutral" : "right";
+    } else if (x < this.leftMax) {
+      nextH = "left";
+    } else if (x > this.rightMin) {
+      nextH = "right";
+    }
     if (nextH !== this.h) {
       if (this.h !== "neutral") events.push({ action: `dpad_${this.h}`, press: false });
-      events.push({ action: `dpad_${nextH}`, press: true });
+      if (nextH !== "neutral") events.push({ action: `dpad_${nextH}`, press: true });
       this.h = nextH;
     }
 

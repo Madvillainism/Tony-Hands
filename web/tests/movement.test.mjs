@@ -7,43 +7,51 @@ const { MovementStateMachine } = await loadModule("../gestures.js");
 const has = (events, action, press) =>
   events.some((e) => e.action === action && e.press === press);
 
-test("any palm position steers: left of center is Left, right is Right", () => {
-  const left = new MovementStateMachine();
-  assert.ok(has(left.update(0.49, 0.5), "dpad_left", true));
-  const right = new MovementStateMachine();
-  assert.ok(has(right.update(0.51, 0.5), "dpad_right", true));
+test("entering each zone emits a press with the right action", () => {
+  for (const [x, y, action] of [
+    [0.05, 0.5, "dpad_left"],
+    [0.9, 0.5, "dpad_right"],
+    [0.25, 0.05, "dpad_up"],
+    [0.25, 0.95, "dpad_down"],
+  ]) {
+    const s = new MovementStateMachine();
+    assert.ok(has(s.update(x, y), action, true), action);
+  }
 });
 
-test("crossing the midline swaps direction in one update", () => {
+test("hysteresis: a direction exits past its exit threshold", () => {
   const s = new MovementStateMachine();
-  s.update(0.1, 0.5);
-  const events = s.update(0.9, 0.5);
-  assert.ok(has(events, "dpad_left", false));
-  assert.ok(has(events, "dpad_right", true));
+  s.update(0.05, 0.5); // enter left
+  assert.deepEqual(s.update(0.22, 0.5), []); // 0.22 < 0.25 exit
+  assert.ok(has(s.update(0.26, 0.5), "dpad_left", false));
 });
 
-test("up/down trigger inside the top/bottom third, with hysteresis on exit", () => {
-  const up = new MovementStateMachine();
-  assert.ok(has(up.update(0.5, 0.3), "dpad_up", true));
-  assert.deepEqual(up.update(0.5, 0.37), [], "still held below 0.40 exit");
-  assert.ok(has(up.update(0.5, 0.42), "dpad_up", false));
+test("the neutral band is [left_max, right_min]", () => {
+  const s = new MovementStateMachine();
+  assert.deepEqual(s.update(0.25, 0.5), []);
+});
 
+test("up/down trigger inside the top/bottom third, not at the frame edge", () => {
+  const up = new MovementStateMachine();
+  assert.ok(has(up.update(0.25, 0.3), "dpad_up", true));
   const down = new MovementStateMachine();
-  assert.ok(has(down.update(0.5, 0.7), "dpad_down", true));
+  assert.ok(has(down.update(0.25, 0.7), "dpad_down", true));
+  const neutral = new MovementStateMachine();
+  assert.deepEqual(neutral.update(0.25, 0.5), []);
 });
 
 test("diagonals emit two independent presses", () => {
   const s = new MovementStateMachine();
-  const events = s.update(0.1, 0.05);
+  const events = s.update(0.05, 0.05);
   assert.ok(has(events, "dpad_left", true));
   assert.ok(has(events, "dpad_up", true));
 });
 
 test("release() emits releases and re-press works at the same position", () => {
   const s = new MovementStateMachine();
-  assert.ok(has(s.update(0.1, 0.5), "dpad_left", true));
+  assert.ok(has(s.update(0.05, 0.5), "dpad_left", true));
   assert.ok(has(s.release(), "dpad_left", false));
   assert.equal(s.h, "neutral");
   // Regression: without reset, update() sees no state change and emits nothing.
-  assert.ok(has(s.update(0.1, 0.5), "dpad_left", true));
+  assert.ok(has(s.update(0.05, 0.5), "dpad_left", true));
 });

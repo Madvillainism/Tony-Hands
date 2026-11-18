@@ -19,6 +19,8 @@ diag_output.txt
 !ps-buttons.jpg
 node_modules/
 dist/
+# Main-menu savestates for the web player — deploy assets, never committed.
+state/
 # Local tooling (e.g. chdman.exe) — never commit binaries.
 tools/
 # Cloudflare deploy inputs (URLs and credentials) — never commit.

@@ -60,10 +60,10 @@ files directly. On first boot EmulatorJS downloads its runtime and core from
 
 ## Controls
 
-The page opens in **Keyboard** mode with the camera card hidden. Switch to
-**Hands** in the Input card to reveal it and start the camera; switching back
-stops it and hides the card again. Touch devices are keyboard-only and show an
-on-screen pad instead.
+The page opens in **Keyboard** mode with the camera card and the cabinet's
+**Live input** chips hidden. Switch to **Hands** in the Input card to reveal both
+and start the camera; switching back hides them again. Touch devices are
+keyboard-only and show an on-screen pad instead.
 
 ### Hands
 
@@ -82,17 +82,27 @@ only, no camera video) to keep CPU cost low. When no hands are visible the
 inference rate drops automatically; if MediaPipe falls back to CPU tracking a
 lighter quality tier is applied.
 
-The **left hand** steers by palm position: left of the frame midline is Left,
-right of it is Right, with no neutral band. The top and bottom thirds trigger
-Up/Down with a 5% hysteresis band, and both axes can be active at once for
-diagonals. The **right hand** performs the face-button gestures. Losing a hand
-releases all inputs so nothing sticks.
+The **left hand** steers by palm position: left of the neutral band (`x < 0.20`)
+is Left, right of it (`x > 0.30`) is Right, and the middle band is neutral. The
+top and bottom thirds trigger Up/Down with a 5% hysteresis band, and both axes
+can be active at once for diagonals. The **right hand** performs the face-button
+gestures. Losing a hand releases all inputs so nothing sticks.
+
+### Menus
+
+Use only the left hand as a D-Pad: move toward the left or right edge for
+sideways, the top third for Up and the bottom third for Down. Rest in the middle
+band to stop steering, or move the hand out of frame to release everything. To
+choose a menu item, raise an open palm on the right hand so all fingers are
+visible — that is Cross (X) and confirms. The peace sign is Triangle and backs
+out; thumbs-down pauses. The same walkthrough is in the animated hands intro
+shown when you select Hands and in the Trick sheet.
 
 ### Keyboard
 
-The default Skate layout (remap any key with the **Remap keys** dialog). The
-same table, with keys that follow your remap, is on the game page under
-**Keyboard controls**:
+The default Skate layout (remap any key with the **Remap keys** dialog). Open the
+collapsed **Keyboard controls** disclosure in the Input column for the full list;
+its key labels follow your remap:
 
 | Key | Button | What it does in THPS |
 |---|---|---|
@@ -108,8 +118,8 @@ same table, with keys that follow your remap, is on the game page under
 `Q`, `E` and `Tab` are deliberately unbound. On a touch device, use the
 emulator-style on-screen buttons instead — they feed the same inputs and never
 raise the soft keyboard. EmulatorJS receives real key events in keyboard mode;
-the chips are a readout. The **Trick sheet** dialog covers hand shapes and
-zones, not the key layout.
+the chip readout is shown only in Hands mode. The **Trick sheet** dialog covers
+hand shapes, menus and zones, not the key layout.
 
 ### Touch, landscape
 
@@ -119,6 +129,17 @@ the controls spread out like a PS1 controller — D-pad bottom-left, face button
 in a diamond bottom-right, shoulders across the top, Start/Select in the
 middle. The **Exit** button in the top corner restores the normal page;
 rotating back to portrait re-enables the full view.
+
+### Fast menu boot
+
+The deployed build loads `state/thps.state` on start through EmulatorJS's
+`EJS_loadStateURL`, so THPS opens at the main menu instead of playing the
+Activision/Neversoft videos. The state file is git-ignored;
+`scripts/upload-assets.ps1` uploads it to R2 and `scripts/prepare-deploy.mjs`
+adds its URL to `deploy-config.js` only when the file exists. Local development
+has no state file and boots normally. Savestates are core-version-specific — if
+an EmulatorJS/core update makes one fail, remove the file (or its `stateUrl`) to
+fall back to the normal boot.
 
 ---
 

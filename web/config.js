@@ -15,9 +15,12 @@ const FALLBACK_GAMES = [
   { id: "thps2", label: "Tony Hawk's Pro Skater 2", rom: "games/thps2/thps2.chd", year: 2000 },
 ];
 
+// A game may carry a `stateUrl` (a RetroArch savestate loaded on boot). Remote
+// builds inject it from deploy-config.js so the game can start at the main menu
+// instead of playing the publisher intro videos; local games leave it empty.
 export const GAMES = Object.freeze(
   (Array.isArray(assets.games) && assets.games.length ? assets.games : FALLBACK_GAMES).map(
-    (game) => Object.freeze({ ...game }),
+    (game) => Object.freeze({ ...game, stateUrl: game.stateUrl ?? null }),
   ),
 );
 
@@ -54,11 +57,11 @@ export const CORES = Object.freeze([
 
 export const DEFAULT_CORE = "fast";
 
-// Steering splits at the frame midline: any palm position left of center is
-// Left, right of center is Right, with no neutral band to park a hand in.
-// The top/bottom thirds trigger Up/Down; hysteresis applies to those zones.
+// Vertical zones are tuned for the browser: the top/bottom third is enough
+// for Up/Down so a hand does not have to be raised to the edge of the frame.
 export const ZONES = Object.freeze({
-  split_x: 0.5,
+  left_max: 0.2,
+  right_min: 0.3,
   up_max: 0.35,
   down_min: 0.65,
   hysteresis: 0.05,
@@ -105,7 +108,6 @@ export const TRACKING = Object.freeze({
 export const STORAGE_KEYS = Object.freeze({
   core: "tony-hands:core",
   remap: "tony-hands:key-remap",
-  introSeen: "tony-hands:gesture-intro-seen",
   game: "tony-hands:game",
 });
 

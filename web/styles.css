@@ -529,6 +529,12 @@ body[data-status="live"][data-mode="keyboard"][data-input="touch"] .touch-pad {
   justify-content: space-between;
 }
 
+/* The chip readout is a hands-mode teaching aid; keyboard players get the
+   on-page guide instead. data-mode is set from the first paint. */
+body[data-mode="keyboard"] .cab__deck {
+  display: none;
+}
+
 .deck__label,
 .deck__note {
   margin: 0;
@@ -1105,94 +1111,77 @@ dialog:modal {
   color: #3d3a33;
 }
 
-.table-wrapper {
-  overflow: auto;
-  max-inline-size: 100%;
-  container-type: inline-size;
-  border: var(--line) solid rgba(246, 241, 227, 0.2);
+/* Collapsed by default: the rail stays short until the guide is wanted. */
+.guide-details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  cursor: pointer;
+  list-style: none;
 }
 
-.key-guide {
-  inline-size: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+.guide-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.guide-details > summary::after {
+  content: "+";
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--orange);
+}
+
+.guide-details[open] > summary::after {
+  content: "–";
+}
+
+.guide-details__hint {
+  margin-block-start: 0;
+}
+
+.guide-list {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guide-list li {
+  display: grid;
+  grid-template-columns: minmax(4.5rem, auto) minmax(3.5rem, auto) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.5rem;
+  padding-block-end: 0.35rem;
+  border-block-end: 1px dashed rgba(246, 241, 227, 0.16);
   font-size: 0.82rem;
 }
 
-.key-guide th,
-.key-guide td {
-  padding: 0.45rem 0.55rem;
-  text-align: start;
-  vertical-align: top;
-  border-block-end: 1px solid rgba(246, 241, 227, 0.14);
-}
-
-.key-guide thead th {
-  position: sticky;
-  inset-block-start: 0;
-  z-index: 1;
-  background: var(--asphalt-2);
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--bone-dim);
-}
-
-.key-guide tbody th {
-  color: var(--bone);
-  font-weight: 700;
+.guide-list__keys {
   white-space: nowrap;
 }
 
-.key-guide td {
-  color: var(--bone-dim);
-}
-
-.key-guide kbd {
+.guide-list__keys kbd {
   margin-inline-end: 0.15rem;
 }
 
-/* In a narrow rail the table becomes labelled cards, so each explanation
-   stays readable instead of shrinking into an unreadable third column. */
-@container (width < 32rem) {
-  .key-guide,
-  .key-guide tbody,
-  .key-guide tr,
-  .key-guide th,
-  .key-guide td {
-    display: block;
-  }
+.guide-list__button {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--yellow);
+}
 
-  .key-guide thead {
-    display: none;
-  }
+.guide-list__effect {
+  color: var(--bone-dim);
+}
 
-  .key-guide tr {
-    padding-block: 0.4rem;
-    border-block-end: 1px solid rgba(246, 241, 227, 0.2);
-  }
-
-  .key-guide tbody th {
-    position: sticky;
-    inset-block-start: 0;
-    z-index: 1;
-    border: 0;
-  }
-
-  .key-guide {
-    --label-button: "PS button";
-    --label-does: "What it does";
-  }
-
-  .key-guide td:nth-of-type(1)::before {
-    content: var(--label-button) ": ";
-    color: var(--bone);
-  }
-
-  .key-guide td:nth-of-type(2)::before {
-    content: var(--label-does) ": ";
-    color: var(--bone);
+@media (max-width: 420px) {
+  .guide-list li {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
   }
 }
 

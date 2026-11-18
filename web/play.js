@@ -115,6 +115,7 @@ const state = {
   engine: null,
   bridge: new PadBridge(getGameManager),
   keyboardHeld: new Set(),
+  introPending: false,
 };
 
 // On-screen pad for touch devices; a no-op object on pointer devices.
@@ -374,7 +375,7 @@ function bootGame(game = selectedGame) {
     onGameStart: () => {
       applyRemapLive();
       setStatus("live", "Game running");
-      if (state.mode === "gestures" && !state.engine?.running) startEngine();
+      if (state.mode === "gestures" && !state.introPending && !state.engine?.running) startEngine();
       // Make sure keys reach EJS immediately after the auto-boot (not on touch).
       if (!touch && state.mode === "keyboard") document.querySelector("#game")?.focus();
     },
@@ -403,30 +404,24 @@ function bootGame(game = selectedGame) {
 
 // ------------------------------------------------------------------ intro
 
+// The animated tutorial is shown on every Hands selection. The camera is
+// started only after it is dismissed, so the lesson comes before the prompt.
 function showGestureIntro() {
   const dialog = document.getElementById("gesture-intro");
-  if (!dialog) return;
-  let seen = false;
-  try {
-    seen = localStorage.getItem(STORAGE_KEYS.introSeen) === "1";
-  } catch {
-    // Restricted storage: show it once per session instead.
-  }
-  if (seen || dialog.open) return;
+  if (!dialog) return false;
+  if (dialog.open) return true;
 
   dialog.addEventListener(
     "close",
     () => {
-      try {
-        localStorage.setItem(STORAGE_KEYS.introSeen, "1");
-      } catch {
-        // Restricted storage: closing is still enough for this session.
-      }
-      dialog.returnValue = "";
+      state.introPending = false;
+      if (state.mode === "gestures") startEngine();
     },
     { once: true },
   );
+  state.introPending = true;
   dialog.showModal();
+  return true;
 }
 
 // ------------------------------------------------------------------- remap
@@ -506,8 +501,13 @@ function captureKey(action, button) {
 for (const radio of els.modeRadios) {
   radio.addEventListener("change", () => {
     if (!radio.checked) return;
-    if (radio.value === "gestures") showGestureIntro();
-    applyMode(radio.value, { activateCamera: true });
+    if (radio.value === "gestures") {
+      const tutorial = showGestureIntro();
+      applyMode(radio.value, { activateCamera: false });
+      if (!tutorial) startEngine();
+    } else {
+      applyMode(radio.value, { activateCamera: true });
+    }
   });
 }
 

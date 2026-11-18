@@ -268,7 +268,8 @@ export class GestureEngine {
       sideDwell: 10,
     });
     this.movement = new MovementStateMachine({
-      splitX: this.zones.split_x,
+      leftMax: this.zones.left_max,
+      rightMin: this.zones.right_min,
       upMax: this.zones.up_max,
       downMin: this.zones.down_min,
       hysteresis: this.zones.hysteresis,

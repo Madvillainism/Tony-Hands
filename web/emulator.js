@@ -74,6 +74,9 @@ export function bootEmulator({ player, game = GAME, controls = KEYBOARD_CONTROLS
     window.EJS_gameUrl = game.rom;
     window.EJS_biosUrl = game.bios ?? GAME.bios;
     window.EJS_gameName = game.label ?? GAME.name;
+    // Optional savestate: EJS fetches it and loads it just after the game
+    // starts. Deploy builds point this at a main-menu state to skip FMVs.
+    window.EJS_loadStateURL = game.stateUrl ?? "";
     window.EJS_pathtodata = DATA_PATH;
     window.EJS_startOnLoaded = DEPLOY.autoStart;
     // Threads need COOP/COEP headers, which a plain static server does not

@@ -191,7 +191,7 @@
             </fieldset>
             <h3 class="card__sub">Keyboard layout</h3>
             <p class="card__hint">
-              Every key and what it does in the game is listed below.
+              Open Keyboard controls below for every key and what it does.
             </p>
             <p class="card__hint" id="mode-hint" aria-live="polite">
               Pick how you want to ride.
@@ -207,78 +207,62 @@
             </div>
           </section>
 
-          <section class="card" id="key-guide">
-            <h2 class="card__title">Keyboard controls</h2>
-            <div
-              class="table-wrapper"
-              role="region"
-              aria-labelledby="key-guide-caption"
-              tabindex="0"
-            >
-              <table class="key-guide">
-                <caption id="key-guide-caption" class="visually-hidden">
-                  Keyboard keys, their PlayStation buttons, and what each one does in Tony Hawk's Pro Skater
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Key</th>
-                    <th scope="col">PS button</th>
-                    <th scope="col">What it does</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <th scope="row">
-                      <kbd data-key-for="dpad_up">W</kbd>
-                      <kbd data-key-for="dpad_left">A</kbd>
-                      <kbd data-key-for="dpad_down">S</kbd>
-                      <kbd data-key-for="dpad_right">D</kbd>
-                    </th>
-                    <td>D-Pad</td>
-                    <td>Steer the board; move through menus.</td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><kbd data-key-for="cross">K</kbd></th>
-                    <td>Cross</td>
-                    <td>Ollie — hold to crouch, release to jump.</td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><kbd data-key-for="circle">L</kbd></th>
-                    <td>Circle</td>
-                    <td>Grab — hold it in the air for a grab trick.</td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><kbd data-key-for="triangle">I</kbd></th>
-                    <td>Triangle</td>
-                    <td>Grind — lock onto a rail or ledge.</td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><kbd data-key-for="square">J</kbd></th>
-                    <td>Square</td>
-                    <td>Flip trick — kickflips and heelflips.</td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><kbd data-key-for="r2">O</kbd></th>
-                    <td>R2</td>
-                    <td>A quick tap spins you 180°.</td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><kbd data-key-for="start">Enter</kbd></th>
-                    <td>Start</td>
-                    <td>Pause, start a session, confirm menus.</td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><kbd data-key-for="select">Shift</kbd></th>
-                    <td>Select</td>
-                    <td>Back out of menus.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          <details class="card guide-details" id="key-guide">
+            <summary class="card__title">Keyboard controls</summary>
+            <p class="card__hint guide-details__hint">
+              Every key, its PS button, and what it does in the game.
+            </p>
+            <ul class="guide-list">
+              <li>
+                <span class="guide-list__keys">
+                  <kbd data-key-for="dpad_up">W</kbd>
+                  <kbd data-key-for="dpad_left">A</kbd>
+                  <kbd data-key-for="dpad_down">S</kbd>
+                  <kbd data-key-for="dpad_right">D</kbd>
+                </span>
+                <span class="guide-list__button">D-Pad</span>
+                <span class="guide-list__effect">Steer; move through menus.</span>
+              </li>
+              <li>
+                <span class="guide-list__keys"><kbd data-key-for="cross">K</kbd></span>
+                <span class="guide-list__button">Cross</span>
+                <span class="guide-list__effect">Ollie — hold to crouch, release to jump.</span>
+              </li>
+              <li>
+                <span class="guide-list__keys"><kbd data-key-for="circle">L</kbd></span>
+                <span class="guide-list__button">Circle</span>
+                <span class="guide-list__effect">Grab — hold it in the air.</span>
+              </li>
+              <li>
+                <span class="guide-list__keys"><kbd data-key-for="triangle">I</kbd></span>
+                <span class="guide-list__button">Triangle</span>
+                <span class="guide-list__effect">Grind — lock onto a rail or ledge.</span>
+              </li>
+              <li>
+                <span class="guide-list__keys"><kbd data-key-for="square">J</kbd></span>
+                <span class="guide-list__button">Square</span>
+                <span class="guide-list__effect">Flip trick — kickflips and heelflips.</span>
+              </li>
+              <li>
+                <span class="guide-list__keys"><kbd data-key-for="r2">O</kbd></span>
+                <span class="guide-list__button">R2</span>
+                <span class="guide-list__effect">A quick tap spins you 180°.</span>
+              </li>
+              <li>
+                <span class="guide-list__keys"><kbd data-key-for="start">Enter</kbd></span>
+                <span class="guide-list__button">Start</span>
+                <span class="guide-list__effect">Pause, start a session, confirm menus.</span>
+              </li>
+              <li>
+                <span class="guide-list__keys"><kbd data-key-for="select">Shift</kbd></span>
+                <span class="guide-list__button">Select</span>
+                <span class="guide-list__effect">Back out of menus.</span>
+              </li>
+            </ul>
             <p class="card__hint">
               Remap any key above — this list follows your bindings.
             </p>
-          </section>
+          </details>
 
         </aside>
       </section>
@@ -292,9 +276,9 @@
             <p class="ride__index" aria-hidden="true">1</p>
             <h3>Steer with the left hand</h3>
             <p>
-              Left of the frame midline steers left; right of it steers right.
-              The top and bottom thirds handle up and down, and both axes work
-              together for diagonals.
+              Move toward the left edge to steer left, or the right edge to
+              steer right; the middle band is neutral. The top and bottom thirds
+              handle up and down, and both axes work together for diagonals.
             </p>
           </li>
           <li class="ride__step">
@@ -312,6 +296,21 @@
             <p>
               Any unrecognised shape releases the held button. Moving your hand
               out of frame releases movement too, so nothing sticks.
+            </p>
+          </li>
+          <li class="ride__step">
+            <p class="ride__index" aria-hidden="true">4</p>
+            <h3>Navigate menus with the left hand</h3>
+            <p>
+              The left hand alone drives the D-Pad: move toward the left or
+              right edge for sideways, the top third for Up and the bottom third
+              for Down. Both axes work together. Rest your hand in the middle
+              band to stop steering; moving it out of frame also releases.
+            </p>
+            <p>
+              In menus, raise an open palm on the right hand so all fingers are
+              visible: that is Cross (X) and confirms. The peace sign is
+              Triangle and backs out; thumbs-down pauses.
             </p>
           </li>
         </ol>
@@ -408,6 +407,21 @@
           </section>
 
           <section>
+            <h3 class="sheet__sub">Menus</h3>
+            <p class="sheet__text">
+              Use only the left hand: move toward the left or right edge for
+              D-Pad sideways, the top third for Up and the bottom third for Down.
+              Rest in the middle band to stop steering, or move the hand out of
+              frame to release everything.
+            </p>
+            <p class="sheet__text">
+              Raise an open palm on the right hand so every finger is visible:
+              that is Cross (X) and confirms. The peace sign is Triangle and
+              backs out. Thumbs-down pauses the game.
+            </p>
+          </section>
+
+          <section>
             <h3 class="sheet__sub">Keyboard</h3>
             <p class="sheet__text">
               Every key, its PlayStation button, and what it does in the game
@@ -419,11 +433,11 @@
           <section>
             <h3 class="sheet__sub">Zones</h3>
             <p class="sheet__text">
-              The left half of the frame is a 3×3 pad. Left of the midline is
-              <strong>left</strong>, right of it is <strong>right</strong> —
-              there is no neutral band. The top third is <strong>up</strong>
-              and the bottom third is <strong>down</strong>, with a 5%
-              hysteresis band so the edge of a vertical zone cannot flicker.
+              The left half of the frame is a 3×3 pad: 20% from the left edge
+              is <strong>left</strong>, 30% from the right edge is
+              <strong>right</strong>, the top third is <strong>up</strong> and
+              the bottom third is <strong>down</strong>. Each zone has a 5%
+              hysteresis band so the edge of a zone cannot flicker.
             </p>
             <p class="sheet__text">
               Both axes work at once, so diagonals are possible.
@@ -451,7 +465,7 @@
             <li class="intro__demo">
               <span class="intro__hand intro__hand--slide" aria-hidden="true">☝️</span>
               <span class="chip">D-Pad</span>
-              <p>Left of the frame steers left; right of center steers right.</p>
+              <p>Move to the left edge to steer left; the right edge steers right.</p>
             </li>
             <li class="intro__demo">
               <span class="intro__hand intro__hand--cycle" aria-hidden="true">✌️</span>
@@ -467,6 +481,16 @@
               <span class="intro__hand intro__hand--leave" aria-hidden="true">🖐️</span>
               <span class="chip">Neutral</span>
               <p>Move a hand out of frame and its inputs release too.</p>
+            </li>
+            <li class="intro__demo">
+              <span class="intro__hand intro__hand--slide" aria-hidden="true">↕️</span>
+              <span class="chip">Menus</span>
+              <p>Use only the left hand for D-Pad up, down, left and right.</p>
+            </li>
+            <li class="intro__demo">
+              <span class="intro__hand intro__hand--tap" aria-hidden="true">✋</span>
+              <span class="chip">Confirm / back</span>
+              <p>Raise an open palm so X (Cross) registers; peace sign backs out.</p>
             </li>
           </ul>
         </div>

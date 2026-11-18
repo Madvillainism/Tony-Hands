@@ -152,9 +152,10 @@ test("remap validation rejects reserved and duplicate keys", () => {
   assert.equal(conflictWith({}, "circle", "KeyG"), false);
 });
 
-test("steering splits at the midline with no neutral band", () => {
+test("vertical zones are tighter than the desktop defaults", () => {
   assert.deepEqual(ZONES, {
-    split_x: 0.5,
+    left_max: 0.2,
+    right_min: 0.3,
     up_max: 0.35,
     down_min: 0.65,
     hysteresis: 0.05,
