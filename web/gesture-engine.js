@@ -10,10 +10,6 @@
 //   index.html forwards `onInput` to the emulator through bridge.js
 
 import {
-  FilesetResolver,
-  HandLandmarker,
-} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
-import {
   ActionStateMachine,
   HandTracker,
   MovementStateMachine,
@@ -29,6 +25,9 @@ let landmarkerPromise = null;
 function loadLandmarker() {
   if (!landmarkerPromise) {
     landmarkerPromise = (async () => {
+      // Loaded only when gesture mode starts: keyboard-first boots don't pay
+      // the ~137 KB ESM parse or the extra CDN connection.
+      const { FilesetResolver, HandLandmarker } = await import(MEDIAPIPE.moduleUrl);
       const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE.wasmUrl);
       const options = {
         baseOptions: {
@@ -43,11 +42,13 @@ function loadLandmarker() {
       };
 
       try {
-        return await HandLandmarker.createFromOptions(vision, options);
+        const landmarker = await HandLandmarker.createFromOptions(vision, options);
+        return { landmarker, delegate: "GPU" };
       } catch (gpuError) {
         console.warn("GPU delegate unavailable, falling back to CPU.", gpuError);
         options.baseOptions.delegate = "CPU";
-        return HandLandmarker.createFromOptions(vision, options);
+        const landmarker = await HandLandmarker.createFromOptions(vision, options);
+        return { landmarker, delegate: "CPU" };
       }
     })().catch((error) => {
       landmarkerPromise = null;
@@ -165,11 +166,16 @@ export class GestureEngine {
       this.rafId = requestAnimationFrame(this.loop);
 
       this.onStatus({ state: "busy", text: "Loading hand model…" });
-      const landmarker = await loadLandmarker();
+      const { landmarker, delegate } = await loadLandmarker();
 
       if (!alive() || !this.running) return;
       this.landmarker = landmarker;
-      this.onStatus({ state: "live", text: "Watching your hands." });
+      this.delegate = delegate;
+      this.onStatus({
+        state: "live",
+        text: `Watching your hands (${delegate} tracking).`,
+      });
+      console.info(`Hand tracking delegate: ${delegate}`);
     } catch (error) {
       this.running = false;
       cancelAnimationFrame(this.rafId);

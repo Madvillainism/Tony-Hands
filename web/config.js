@@ -50,6 +50,7 @@ export const ZONES = Object.freeze({
 
 export const MEDIAPIPE = Object.freeze({
   version: "0.10.14",
+  moduleUrl: "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14",
   wasmUrl: "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm",
   modelUrl:
     "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
@@ -58,9 +59,18 @@ export const MEDIAPIPE = Object.freeze({
 // Two tracking budgets, because playing is the expensive one: the emulator
 // already owns the main thread, so the camera runs small and slow while a
 // game is on screen. `fps: 0` means "every frame the camera provides".
+// Gesture quality: "low" (default on the live build) keeps the single-threaded
+// emulator responsive by inferring at 12 fps and repainting the preview at 5.
+// "high" restores 20/20 for capable machines. Override via deploy-config.js.
+const quality = assets.quality === "high" ? "high" : "low";
+
 export const TRACKING = Object.freeze({
-  play: Object.freeze({ width: 320, height: 240, fps: 20 }),
-  demo: Object.freeze({ width: 640, height: 480, fps: 0 }),
+  play: Object.freeze(
+    quality === "high"
+      ? { width: 320, height: 240, fps: 20, previewFps: 20 }
+      : { width: 320, height: 240, fps: 12, previewFps: 5 },
+  ),
+  demo: Object.freeze({ width: 640, height: 480, fps: 0, previewFps: 0 }),
 });
 
 export const STORAGE_KEYS = Object.freeze({

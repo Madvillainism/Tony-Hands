@@ -46,6 +46,21 @@ const els = {
 
 const previewCtx = els.preview.getContext("2d");
 
+// The preview is cosmetic: repaint at a fraction of the inference rate so the
+// single-threaded emulator keeps its frame budget. The minimum interval comes
+// from TRACKING.play.previewFps (5 on the live "low" quality build).
+const previewIntervalMs = TRACKING.play.previewFps > 0
+  ? 1000 / TRACKING.play.previewFps
+  : Infinity;
+let lastPreviewAt = 0;
+
+function drawPreviewThrottled() {
+  const now = performance.now();
+  if (now - lastPreviewAt < previewIntervalMs) return;
+  lastPreviewAt = now;
+  drawPreview();
+}
+
 // Keyboard chips are read-only decoration; the emulator handles the real keys.
 // Derived from the key map so the readout always matches the active binding.
 let remap = loadRemap();
@@ -131,7 +146,7 @@ function startEngine() {
       video: els.video,
       tracking: TRACKING.play,
       zones: ZONES,
-      onHands: drawPreview,
+      onHands: TRACKING.play.previewFps > 0 ? drawPreviewThrottled : undefined,
       onInput: handleInput,
       onStatus: handleEngineStatus,
       onError: (message) => {
@@ -154,6 +169,13 @@ function stopEngine() {
 function handleEngineStatus(status) {
   if (status.state === "live") {
     setStatus("live", "Watching your hands");
+    // Show which delegate MediaPipe chose — CPU fallback explains a slow
+    // gesture experience on integrated GPUs / incognito sessions.
+    setModeHint(
+      status.text?.includes("tracking")
+        ? status.text
+        : `Gesture mode · ${state.engine?.delegate ?? "GPU"} tracking. Left hand steers, right hand tricks.`,
+    );
     els.previewOff.hidden = true;
   } else if (status.state === "busy") {
     setStatus("busy", status.text);
@@ -222,6 +244,16 @@ function applyMode(mode, { activateCamera = false } = {}) {
 
 async function refreshFiles() {
   els.boot.disabled = true;
+
+  // On the live build we boot immediately — skip the two HEAD probes (2 RTTs)
+  // and let EmulatorJS surface a fetch error if the files are unavailable.
+  if (DEPLOY.autoStart) {
+    state.filesReady = true;
+    setStatus("busy", "Loading the emulator");
+    if (!state.booted) bootGame();
+    return;
+  }
+
   setStatus("busy", "Loading");
   els.gateHint.textContent = "Loading…";
 
@@ -462,5 +494,4 @@ window.addEventListener("pagehide", () => {
 // ------------------------------------------------------------------- start
 
 applyMode("keyboard");
-drawPreview();
 refreshFiles();

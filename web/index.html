@@ -21,8 +21,6 @@
       crossorigin
     />
     <link rel="preconnect" href="https://cdn.emulatorjs.org" />
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-    <link rel="preconnect" href="https://storage.googleapis.com" crossorigin />
     <link rel="stylesheet" href="./styles.css" />
     <script src="./deploy-config.js"></script>
     <script type="module" src="./play.js"></script>
@@ -138,8 +136,8 @@
             <div class="preview">
               <canvas
                 id="preview"
-                width="640"
-                height="480"
+                width="320"
+                height="240"
                 role="img"
                 aria-label="Mirrored camera preview with movement zones and tracked hands."
               ></canvas>
@@ -416,7 +414,6 @@
       class="visually-hidden"
       playsinline
       muted
-      autoplay
       aria-hidden="true"
     ></video>
 

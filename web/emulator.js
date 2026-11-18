@@ -82,6 +82,8 @@ export function bootEmulator({ player, controls = KEYBOARD_CONTROLS, onGameStart
     // ("es"), but the CDN only publishes region variants ("es-ES"), so the
     // 404 aborts startup before EJS_emulator exists.
     window.EJS_language = "en-US";
+    // Avoid the redundant localization/<lang>.json fetch on every boot.
+    window.EJS_disableAutoLang = false;
     window.EJS_alignStartButton = "center";
     window.EJS_color = "#ff5a1f";
     window.EJS_backgroundColor = "#0b0b0d";

@@ -1,11 +1,11 @@
 [CmdletBinding()]
-param([switch]$Force)
+param([switch]$Force, [switch]$IncludeBin)
 
 # Upload the game files to a public Cloudflare R2 bucket.
 #
 # Credentials are read from environment variables (or scripts/deploy.env, which
-# is git-ignored). Nothing is printed. The 630 MB disc image uses the S3 API
-# because Wrangler's `r2 object put` caps uploads at 315 MB.
+# is git-ignored). Nothing is printed. The disc images use the S3 API because
+# Wrangler's `r2 object put` caps uploads at 315 MB.
 #
 # Required env vars:
 #   R2_ACCOUNT_ID      Cloudflare account ID
@@ -15,6 +15,7 @@ param([switch]$Force)
 #
 # Usage (from the repo root):
 #   powershell -File scripts/upload-assets.ps1
+#   powershell -File scripts/upload-assets.ps1 -IncludeBin   # also upload thps.bin rollback
 
 # Native AWS CLI stderr must not be treated as terminating errors: a
 # bucket-scoped token cannot call admin APIs like GetBucketVersioning.
@@ -50,10 +51,19 @@ $env:AWS_ACCESS_KEY_ID = $key
 $env:AWS_SECRET_ACCESS_KEY = $secret
 $endpoint = "https://$account.r2.cloudflarestorage.com"
 
-$rom = Join-Path $PSScriptRoot "..\web\games\thps.bin"
-$bios = Join-Path $PSScriptRoot "..\web\games\scph5501.bin"
+# CHD images are the primary files; thps.bin stays in the bucket as a rollback
+# but is not re-uploaded unless -IncludeBin is passed.
+$assets = @(
+  @{ Local = "..\web\games\thps.chd";        Key = "thps.chd" },
+  @{ Local = "..\web\games\thps2\thps2.chd"; Key = "thps2.chd" },
+  @{ Local = "..\web\games\scph5501.bin";    Key = "scph5501.bin" }
+)
+if ($IncludeBin) {
+  $assets += @{ Local = "..\web\games\thps.bin"; Key = "thps.bin" }
+}
 
-foreach ($file in @($rom, $bios)) {
+foreach ($asset in $assets) {
+  $file = Join-Path $PSScriptRoot $asset.Local
   if (-not (Test-Path $file)) {
     Write-Error "Game file not found: $file"
     exit 1
@@ -61,7 +71,8 @@ foreach ($file in @($rom, $bios)) {
 }
 
 # --- Guardrails: keep the bucket inside the free tier -------------------
-$expected = @("thps.bin", "scph5501.bin")
+# thps.bin is intentionally retained in the bucket as a rollback copy.
+$expected = @($assets | ForEach-Object { $_.Key }) + @("thps.bin")
 
 $versioningRaw = aws s3api get-bucket-versioning --bucket $bucket --endpoint-url $endpoint --output json 2>$null
 if ($LASTEXITCODE -eq 0 -and $versioningRaw) {
@@ -88,19 +99,16 @@ if ($LASTEXITCODE -eq 0 -and $existingRaw) {
   }
 }
 
-Write-Host "Uploading thps.bin and scph5501.bin to R2 bucket '$bucket'..."
+Write-Host "Uploading $($expected -join ', ') to R2 bucket '$bucket'..."
 
-aws s3 cp $rom "s3://$bucket/thps.bin" `
-  --endpoint-url $endpoint `
-  --cache-control "public, max-age=31536000, immutable" `
-  --content-type "application/octet-stream" | Out-Null
-if ($LASTEXITCODE -ne 0) { Write-Error "Failed to upload thps.bin"; exit 1 }
-
-aws s3 cp $bios "s3://$bucket/scph5501.bin" `
-  --endpoint-url $endpoint `
-  --cache-control "public, max-age=31536000, immutable" `
-  --content-type "application/octet-stream" | Out-Null
-if ($LASTEXITCODE -ne 0) { Write-Error "Failed to upload scph5501.bin"; exit 1 }
+foreach ($asset in $assets) {
+  $file = Join-Path $PSScriptRoot $asset.Local
+  aws s3 cp $file "s3://$bucket/$($asset.Key)" `
+    --endpoint-url $endpoint `
+    --cache-control "public, max-age=31536000, immutable" `
+    --content-type "application/octet-stream" | Out-Null
+  if ($LASTEXITCODE -ne 0) { Write-Error "Failed to upload $($asset.Key)"; exit 1 }
+}
 
 foreach ($key in $expected) {
   $head = aws s3api head-object --bucket $bucket --key $key --endpoint-url $endpoint --output json 2>$null | ConvertFrom-Json
@@ -110,4 +118,4 @@ foreach ($key in $expected) {
   }
 }
 
-Write-Host "Upload complete. Verify with curl -I against the public URL for thps.bin"
+Write-Host "Upload complete. Verify with curl -I against the public URLs."
