@@ -163,10 +163,10 @@ export class HandTracker {
   constructor({
     smoothingAlpha = 0.5,
     maxTracks = 2,
-    matchDistance = 0.3,
-    maxLost = 8,
-    sideMargin = 0.15,
-    sideDwell = 10,
+    matchDistance = 0.5,
+    maxLost = 4,
+    sideMargin = 0.12,
+    sideDwell = 8,
   } = {}) {
     this.alpha = smoothingAlpha;
     this.maxTracks = maxTracks;
@@ -286,7 +286,7 @@ const GESTURE_TO_ACTION = {
   peace: "triangle",
   l_shape: "square",
   thumbs_up: "circle",
-  thumbs_down: "pause",
+  thumbs_down: "start",
 };
 
 export class ActionStateMachine {

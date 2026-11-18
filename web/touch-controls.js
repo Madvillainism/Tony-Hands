@@ -3,33 +3,51 @@
 // Pointer Events only: no click handler and no focus() of the EJS parent, so
 // mobile browsers never raise the soft keyboard. Multiple fingers are tracked
 // independently and refcounted per action (two fingers on one button still
-// produce a single press until the last one lifts).
+// produce a single press until the last one lifts). A button may list several
+// whitespace-separated actions, which is how the diagonal D-Pad pads hold two
+// directions at once.
 
 export function createTouchState() {
   return { pointers: new Map(), counts: new Map() };
 }
 
-/** Register a pointer press. Returns the action to press, or null. */
-export function pointerDown(state, pointerId, action, validActions) {
-  if (!validActions.has(action)) return null;
-  state.pointers.set(pointerId, action);
-  const count = (state.counts.get(action) ?? 0) + 1;
-  state.counts.set(action, count);
-  return count === 1 ? action : null; // press only on first touch
+/** Split a button's data-action into individual RetroPad actions. */
+export function actionsOf(button) {
+  return (button.dataset.action ?? "").trim().split(/\s+/).filter(Boolean);
 }
 
-/** Release a pointer. Returns { action, release } or null. */
-export function pointerUp(state, pointerId) {
-  const action = state.pointers.get(pointerId);
-  if (action === undefined) return null;
-  state.pointers.delete(pointerId);
-  const count = (state.counts.get(action) ?? 1) - 1;
-  if (count > 0) {
+/** Register a pointer press. Returns only the actions that became pressed. */
+export function pointerDown(state, pointerId, actions, validActions) {
+  const accepted = actions.filter((action) => validActions.has(action));
+  if (accepted.length === 0) return [];
+
+  state.pointers.set(pointerId, accepted);
+  const pressed = [];
+  for (const action of accepted) {
+    const count = (state.counts.get(action) ?? 0) + 1;
     state.counts.set(action, count);
-    return { action, release: false };
+    if (count === 1) pressed.push(action);
   }
-  state.counts.delete(action);
-  return { action, release: true };
+  return pressed;
+}
+
+/** Release a pointer. Returns { actions, release } or null. */
+export function pointerUp(state, pointerId) {
+  const actions = state.pointers.get(pointerId);
+  if (!actions) return null;
+
+  state.pointers.delete(pointerId);
+  const released = [];
+  for (const action of actions) {
+    const count = (state.counts.get(action) ?? 1) - 1;
+    if (count > 0) {
+      state.counts.set(action, count);
+    } else {
+      state.counts.delete(action);
+      released.push(action);
+    }
+  }
+  return { actions: released, release: released.length > 0 };
 }
 
 /** Release every held action (tab hide, page unload, mode switch). */
@@ -52,27 +70,20 @@ export function clearTouches(state) {
 export function bindTouchControls({ root, bridge, isAllowed, onChange }) {
   const state = createTouchState();
   const validActions = new Set(
-    [...root.querySelectorAll("[data-action]")].map((b) => b.dataset.action),
+    [...root.querySelectorAll("[data-action]")].flatMap(actionsOf),
   );
-
-  const buttonFor = (action) =>
-    root.querySelector(`[data-action="${CSS.escape(action)}"]`);
-
-  function setActive(action, active) {
-    const button = buttonFor(action);
-    if (button) button.classList.toggle("is-active", active);
-  }
+  const activeButtons = new Map();
 
   function onDown(event) {
     if (!isAllowed()) return;
     const button = event.target.closest("[data-action]");
     if (!button) return;
     event.preventDefault(); // suppress scroll, zoom and the soft keyboard
-    const action = button.dataset.action;
-    const pressed = pointerDown(state, event.pointerId, action, validActions);
-    if (pressed) {
-      bridge.set(pressed, true);
-      setActive(action, true);
+    const pressed = pointerDown(state, event.pointerId, actionsOf(button), validActions);
+    if (pressed.length) {
+      for (const action of pressed) bridge.set(action, true);
+      button.classList.add("is-active");
+      activeButtons.set(event.pointerId, button);
       onChange?.();
     }
     try {
@@ -84,10 +95,12 @@ export function bindTouchControls({ root, bridge, isAllowed, onChange }) {
 
   function onEnd(event) {
     const result = pointerUp(state, event.pointerId);
-    if (!result) return;
-    if (result.release) {
-      bridge.set(result.action, false);
-      setActive(result.action, false);
+    const button = activeButtons.get(event.pointerId);
+    activeButtons.delete(event.pointerId);
+    if (button) button.classList.remove("is-active");
+
+    if (result?.release) {
+      for (const action of result.actions) bridge.set(action, false);
       onChange?.();
     }
   }
@@ -100,10 +113,11 @@ export function bindTouchControls({ root, bridge, isAllowed, onChange }) {
   return {
     state,
     clear() {
-      for (const action of clearTouches(state)) {
-        bridge.set(action, false);
-        setActive(action, false);
+      for (const action of clearTouches(state)) bridge.set(action, false);
+      for (const button of root.querySelectorAll(".is-active")) {
+        button.classList.remove("is-active");
       }
+      activeButtons.clear();
       onChange?.();
     },
   };

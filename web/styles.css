@@ -417,6 +417,10 @@ body[data-status="live"][data-mode="keyboard"][data-input="touch"] .touch-pad {
 .touch-btn--left { grid-area: 2 / 1; }
 .touch-btn--right { grid-area: 2 / 3; }
 .touch-btn--down { grid-area: 3 / 2; }
+.touch-btn--up-left { grid-area: 1 / 1; }
+.touch-btn--up-right { grid-area: 1 / 3; }
+.touch-btn--down-left { grid-area: 3 / 1; }
+.touch-btn--down-right { grid-area: 3 / 3; }
 .touch-pad__face {
   display: grid;
   grid-template: repeat(2, 1fr) / repeat(2, 1fr);

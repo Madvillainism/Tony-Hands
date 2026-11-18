@@ -146,8 +146,9 @@ intro and the Trick sheet.
 On touch devices the keyboard
 toggle is hidden and an emulator-style on-screen pad appears — no soft keyboard.
 Turning a touch device sideways gives a full-viewport game with a PS1-style pad
-(D-pad left, face diamond right, shoulders on top, Start/Select in the middle)
-and an Exit button to restore the page. Open <http://localhost:8000/demo.html>
+(D-pad left, face diamond right, shoulders on top, Start/Select in the middle).
+The D-pad corner buttons are diagonals that hold two directions at once. An Exit
+button restores the page. Open <http://localhost:8000/demo.html>
 for the hands test bench — it draws the full skeleton overlay and lights chips
 without booting a game. The deployed build loads an optional main-menu savestate
 so the publisher videos are skipped; see [web/README.md](../web/README.md) for

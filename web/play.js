@@ -154,6 +154,14 @@ function setModeHint(text, tone = "info") {
   els.modeHint.dataset.tone = tone;
 }
 
+// EJS binds keys on #game. Fullscreen promotes that element to the top layer
+// and can leave focus elsewhere, so every mode/boot/fullscreen change refocuses it.
+function focusGame() {
+  if (touch || state.mode !== "keyboard") return;
+  const target = document.fullscreenElement ?? document.querySelector("#game");
+  target?.focus?.({ preventScroll: true });
+}
+
 function renderChips() {
   const active = new Set(state.bridge.pressed);
   if (state.mode === "keyboard") {
@@ -233,15 +241,8 @@ function drawPreview() {
 
 function handleInput(event) {
   if (state.mode !== "gestures") return;
-  // Thumbs-down toggles pause. Edge-triggered and never sent to the bridge:
-  // pause is not a RetroPad button, and the matching release must be ignored.
-  if (event.action === "pause") {
-    if (event.press) {
-      releaseEverything();
-      getEmulator()?.togglePlaying();
-    }
-    return;
-  }
+  // Thumbs-down is Start now: it goes through the bridge like any other
+  // RetroPad button so THPS opens its own pause menu.
   state.bridge.apply(event);
   renderChips();
   if (event.press) announce(`Pressed ${ACTION_LABELS[event.action] ?? event.action}`);
@@ -272,7 +273,7 @@ function applyMode(mode, { activateCamera = false } = {}) {
     document.body.dataset.mode = "keyboard";
     // EJS binds keys to #game; refocus after UI clicks so keys work. On touch
     // devices focusing #game can raise the soft keyboard — never do it there.
-    if (!touch && state.booted) document.querySelector("#game")?.focus();
+    if (state.booted) focusGame();
   } else {
     setModeHint("Hands mode. Left hand steers, right hand tricks.");
     document.body.dataset.mode = "gestures";
@@ -377,7 +378,7 @@ function bootGame(game = selectedGame) {
       setStatus("live", "Game running");
       if (state.mode === "gestures" && !state.introPending && !state.engine?.running) startEngine();
       // Make sure keys reach EJS immediately after the auto-boot (not on touch).
-      if (!touch && state.mode === "keyboard") document.querySelector("#game")?.focus();
+      focusGame();
     },
     onExit: () => {
       releaseEverything();
@@ -579,6 +580,12 @@ wireDialogs();
 
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) releaseEverything();
+});
+
+// EmulatorJS requests fullscreen on #game and listens for keys there. Refocus
+// after the top-layer transition so keyboard input keeps reaching the core.
+document.addEventListener("fullscreenchange", () => {
+  requestAnimationFrame(focusGame);
 });
 
 window.addEventListener("pagehide", () => {

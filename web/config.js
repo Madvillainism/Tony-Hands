@@ -74,13 +74,24 @@ export const MEDIAPIPE = Object.freeze({
   modelUrl:
     "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
   // Detection thresholds are tunables, not magic numbers in the engine.
-  minDetectionConfidence: 0.7,
-  minHandPresenceConfidence: 0.7,
-  minTrackingConfidence: 0.5,
+  // Slightly lower values keep hands near the frame edges from dropping out.
+  minDetectionConfidence: 0.6,
+  minHandPresenceConfidence: 0.6,
+  minTrackingConfidence: 0.4,
   numHands: 2,
   // When no hands are visible for this long, inference drops to idleFps.
   idleAfterMs: 2000,
   idleFps: 4,
+});
+
+// Hand identity matching. The match radius is how far a palm can jump between
+// inferences and still be the same hand; too small and a fast hand near the
+// edge is dropped because both track slots are held by stale tracks.
+export const HAND_TRACKING = Object.freeze({
+  matchDistance: 0.5,
+  maxLost: 4,
+  sideMargin: 0.12,
+  sideDwell: 8,
 });
 
 // Two tracking budgets, because playing is the expensive one: the emulator

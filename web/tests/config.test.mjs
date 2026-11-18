@@ -21,6 +21,7 @@ const {
   isTouchDevice,
   STORAGE_KEYS,
   MEDIAPIPE,
+  HAND_TRACKING,
 } = await loadModule("../config.js");
 
 test("game registry holds both PS1 titles with a selector default", () => {
@@ -54,9 +55,20 @@ test("isTouchDevice detects coarse pointers and touch points", () => {
 
 test("MediaPipe thresholds are config-driven", () => {
   assert.equal(MEDIAPIPE.numHands, 2);
-  assert.equal(MEDIAPIPE.minDetectionConfidence, 0.7);
+  assert.equal(MEDIAPIPE.minDetectionConfidence, 0.6);
+  assert.equal(MEDIAPIPE.minHandPresenceConfidence, 0.6);
+  assert.equal(MEDIAPIPE.minTrackingConfidence, 0.4);
   assert.equal(MEDIAPIPE.idleFps, 4);
   assert.equal(MEDIAPIPE.idleAfterMs, 2000);
+});
+
+test("hand tracking uses a generous match radius and quick stale eviction", () => {
+  assert.deepEqual(HAND_TRACKING, {
+    matchDistance: 0.5,
+    maxLost: 4,
+    sideMargin: 0.12,
+    sideDwell: 8,
+  });
 });
 
 test("pcsx_rearmed is the only core", () => {

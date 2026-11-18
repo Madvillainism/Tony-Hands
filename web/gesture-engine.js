@@ -17,7 +17,7 @@ import {
   classifyGesture,
   palmCenter,
 } from "./gestures.js";
-import { MEDIAPIPE, TRACKING, ZONES } from "./config.js";
+import { HAND_TRACKING, MEDIAPIPE, TRACKING, ZONES } from "./config.js";
 
 // The model and WASM runtime are page-wide, so a second start() reuses them.
 let landmarkerPromise = null;
@@ -262,10 +262,10 @@ export class GestureEngine {
   resetMachines() {
     this.tracker = new HandTracker({
       smoothingAlpha: 0.5,
-      matchDistance: 0.3,
-      maxLost: 8,
-      sideMargin: 0.15,
-      sideDwell: 10,
+      matchDistance: HAND_TRACKING.matchDistance,
+      maxLost: HAND_TRACKING.maxLost,
+      sideMargin: HAND_TRACKING.sideMargin,
+      sideDwell: HAND_TRACKING.sideDwell,
     });
     this.movement = new MovementStateMachine({
       leftMax: this.zones.left_max,

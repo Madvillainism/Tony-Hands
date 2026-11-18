@@ -71,7 +71,7 @@ keyboard-only and show an on-screen pad instead.
 |---|---|---|
 | ✋ Open palm | Cross | Crouch and hold; make a fist to ollie |
 | 👍 Thumbs up | Circle | Grab |
-| 👎 Thumbs down | Pause | Upright fist, thumb down; repeat to resume |
+| 👎 Thumbs down | Start | Opens the game's pause menu; repeat to resume |
 | ✌️ Peace sign | Triangle | Grind |
 | 🤘 L shape | Square | Flip trick |
 | ☝️ Point (left hand) | R2 tap | 120 ms press, 250 ms cooldown |
@@ -95,7 +95,7 @@ sideways, the top third for Up and the bottom third for Down. Rest in the middle
 band to stop steering, or move the hand out of frame to release everything. To
 choose a menu item, raise an open palm on the right hand so all fingers are
 visible — that is Cross (X) and confirms. The peace sign is Triangle and backs
-out; thumbs-down pauses. The same walkthrough is in the animated hands intro
+out; thumbs-down opens the game's pause menu. The same walkthrough is in the animated hands intro
 shown when you select Hands and in the Trick sheet.
 
 ### Keyboard
@@ -127,8 +127,9 @@ On a touch device turned sideways the page becomes a full-viewport game: the
 masthead, setup cards and footer are hidden, the emulator fills the screen, and
 the controls spread out like a PS1 controller — D-pad bottom-left, face buttons
 in a diamond bottom-right, shoulders across the top, Start/Select in the
-middle. The **Exit** button in the top corner restores the normal page;
-rotating back to portrait re-enables the full view.
+middle. The D-pad's four corner buttons are diagonals: each holds two adjacent
+directions at once. The **Exit** button in the top corner restores the normal
+page; rotating back to portrait re-enables the full view.
 
 ### Fast menu boot
 
@@ -182,8 +183,10 @@ web/
 
 Tuning lives in [`config.js`](config.js): `ZONES` holds the browser steering
 split and vertical thresholds (the desktop app still uses `config.toml` with a
-neutral band), and `TRACKING.play` sets the in-game camera budget to 320×240 at
-12 fps by default. Change values there, not in the pipeline.
+neutral band), `HAND_TRACKING` controls how far a hand can jump before its track
+is lost and how quickly stale tracks are evicted, and `TRACKING.play` sets the
+in-game camera budget to 320×240 at 12 fps by default. Change values there, not
+in the pipeline.
 
 ### Differences from the desktop app
 
@@ -331,7 +334,7 @@ confirm the game reaches the title screen with no CORS errors in DevTools.
 - [x] Hands test bench (`demo.html`)
 - [x] Playable THPS 1 and THPS 2 with a game selector
 - [x] Hands / keyboard toggle, in-page key remapping and on-page key guide
-- [x] Full-viewport landscape touch pad, pause gesture, CPU-friendly quality tiers
+- [x] Full-viewport landscape touch pad, Start/pause gesture, CPU-friendly quality tiers
 - [ ] Browser as a wireless controller for desktop RetroArch (idea)
 - [x] Live at [tony-hands.pages.dev](https://tony-hands.pages.dev) (Cloudflare Pages + R2 — recipe above)
 

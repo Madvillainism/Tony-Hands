@@ -90,10 +90,14 @@
 
             <div class="touch-pad" id="touch-pad" role="group" aria-label="Touch controls">
               <div class="touch-pad__dpad" aria-label="D-pad">
+                <button type="button" class="touch-btn touch-btn--up-left" data-action="dpad_up dpad_left" aria-label="D-pad up and left">↖</button>
                 <button type="button" class="touch-btn touch-btn--up" data-action="dpad_up" aria-label="D-pad up">▲</button>
+                <button type="button" class="touch-btn touch-btn--up-right" data-action="dpad_up dpad_right" aria-label="D-pad up and right">↗</button>
                 <button type="button" class="touch-btn touch-btn--left" data-action="dpad_left" aria-label="D-pad left">◀</button>
                 <button type="button" class="touch-btn touch-btn--right" data-action="dpad_right" aria-label="D-pad right">▶</button>
+                <button type="button" class="touch-btn touch-btn--down-left" data-action="dpad_down dpad_left" aria-label="D-pad down and left">↙</button>
                 <button type="button" class="touch-btn touch-btn--down" data-action="dpad_down" aria-label="D-pad down">▼</button>
+                <button type="button" class="touch-btn touch-btn--down-right" data-action="dpad_down dpad_right" aria-label="D-pad down and right">↘</button>
               </div>
               <div class="touch-pad__center">
                 <div class="touch-pad__shoulders">
@@ -287,7 +291,7 @@
             <p>
               Open palm is Cross, thumbs up is Circle, peace is Triangle, an L
               is Square. Point with the left hand for an R2 tap. Thumbs down
-              pauses the game.
+              presses Start to open the game's pause menu.
             </p>
           </li>
           <li class="ride__step">
@@ -310,7 +314,7 @@
             <p>
               In menus, raise an open palm on the right hand so all fingers are
               visible: that is Cross (X) and confirms. The peace sign is
-              Triangle and backs out; thumbs-down pauses.
+              Triangle and backs out; thumbs-down opens the pause menu.
             </p>
           </li>
         </ol>
@@ -376,8 +380,8 @@
               <li class="trick">
                 <span class="trick__glyph" aria-hidden="true">👎</span>
                 <span class="trick__name">Thumbs down</span>
-                <span class="trick__key">Pause</span>
-                <span class="trick__note">Upright fist, thumb down. Repeat to resume.</span>
+                <span class="trick__key">Start</span>
+                <span class="trick__note">Upright fist, thumb down. Opens the game's pause menu; repeat to resume.</span>
               </li>
               <li class="trick">
                 <span class="trick__glyph" aria-hidden="true">✌️</span>
@@ -417,7 +421,7 @@
             <p class="sheet__text">
               Raise an open palm on the right hand so every finger is visible:
               that is Cross (X) and confirms. The peace sign is Triangle and
-              backs out. Thumbs-down pauses the game.
+              backs out. Thumbs-down opens the game's pause menu.
             </p>
           </section>
 
@@ -470,7 +474,7 @@
             <li class="intro__demo">
               <span class="intro__hand intro__hand--cycle" aria-hidden="true">✌️</span>
               <span class="chip">Triangle</span>
-              <p>Peace grinds. Thumbs up grabs, an L flips. Thumbs down pauses.</p>
+              <p>Peace grinds. Thumbs up grabs, an L flips. Thumbs down opens the pause menu.</p>
             </li>
             <li class="intro__demo">
               <span class="intro__hand intro__hand--fade" aria-hidden="true">✊</span>

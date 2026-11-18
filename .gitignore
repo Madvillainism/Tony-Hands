@@ -25,4 +25,6 @@ state/
 tools/
 # Cloudflare deploy inputs (URLs and credentials) — never commit.
 scripts/deploy.env
+# Wrangler local development cache.
+.wrangler/
 *.egg-info/

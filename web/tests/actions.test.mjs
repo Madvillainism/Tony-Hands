@@ -54,15 +54,15 @@ test("thumbs down wins over thumbs up priority, fist still catches tucked thumb"
   assert.equal(classifyGesture(fist), "fist");
 });
 
-test("thumbs down maps to an edge-triggered pause event", () => {
+test("thumbs down maps to the in-game Start button", () => {
   const s = new ActionStateMachine({ stableFrames: 2, releaseCooldownMs: 90 });
   assert.deepEqual(s.update("thumbs_down"), []);
   const pressed = s.update("thumbs_down");
-  assert.ok(pressed.some((e) => e.action === "pause" && e.press));
+  assert.ok(pressed.some((e) => e.action === "start" && e.press));
   s.tick(100);
   assert.deepEqual(s.update("fist"), []);
   const released = s.update("fist");
-  assert.ok(released.some((e) => e.action === "pause" && !e.press));
+  assert.ok(released.some((e) => e.action === "start" && !e.press));
 });
 
 test("R2TapStateMachine only fires for point with the left hand", () => {
