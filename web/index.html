@@ -85,30 +85,31 @@
               </p>
             </div>
 
-            <div class="gesture-hud" id="gesture-hud" aria-hidden="true">
-              <p class="gesture-hud__title">Gesture controls</p>
-              <div class="gesture-hud__grid">
-                <div>
-                  <h3>Move · left hand</h3>
-                  <p>Left / right / up / down zones</p>
+            <div class="touch-pad" id="touch-pad" role="group" aria-label="Touch controls">
+              <div class="touch-pad__dpad" aria-label="D-pad">
+                <button type="button" class="touch-btn touch-btn--up" data-action="dpad_up" aria-label="D-pad up">▲</button>
+                <button type="button" class="touch-btn touch-btn--left" data-action="dpad_left" aria-label="D-pad left">◀</button>
+                <button type="button" class="touch-btn touch-btn--right" data-action="dpad_right" aria-label="D-pad right">▶</button>
+                <button type="button" class="touch-btn touch-btn--down" data-action="dpad_down" aria-label="D-pad down">▼</button>
+              </div>
+              <div class="touch-pad__center">
+                <div class="touch-pad__shoulders">
+                  <button type="button" class="touch-btn" data-action="l1" aria-label="L1">L1</button>
+                  <button type="button" class="touch-btn" data-action="l2" aria-label="L2">L2</button>
+                  <button type="button" class="touch-btn" data-action="r2" aria-label="R2">R2</button>
+                  <button type="button" class="touch-btn" data-action="r1" aria-label="R1">R1</button>
                 </div>
-                <div>
-                  <h3>Tricks · right hand</h3>
-                  <p>✋ Cross · 👍 Circle · ✌️ Triangle · 🤘 Square</p>
-                  <p>☝️ R2 · ✊ release</p>
+                <div class="touch-pad__system">
+                  <button type="button" class="touch-btn" data-action="select" aria-label="Select">SEL</button>
+                  <button type="button" class="touch-btn" data-action="start" aria-label="Start">START</button>
                 </div>
               </div>
-              <ul class="chips chips--hud">
-                <li><span class="chip" data-action="dpad_up"><span class="glyph" aria-hidden="true">↑</span>Up</span></li>
-                <li><span class="chip" data-action="dpad_down"><span class="glyph" aria-hidden="true">↓</span>Down</span></li>
-                <li><span class="chip" data-action="dpad_left"><span class="glyph" aria-hidden="true">←</span>Left</span></li>
-                <li><span class="chip" data-action="dpad_right"><span class="glyph" aria-hidden="true">→</span>Right</span></li>
-                <li><span class="chip" data-action="cross"><span class="glyph" aria-hidden="true">✕</span>Cross</span></li>
-                <li><span class="chip" data-action="circle"><span class="glyph" aria-hidden="true">○</span>Circle</span></li>
-                <li><span class="chip" data-action="triangle"><span class="glyph" aria-hidden="true">△</span>Triangle</span></li>
-                <li><span class="chip" data-action="square"><span class="glyph" aria-hidden="true">□</span>Square</span></li>
-                <li><span class="chip" data-action="r2">R2</span></li>
-              </ul>
+              <div class="touch-pad__face" aria-label="Face buttons">
+                <button type="button" class="touch-btn touch-btn--triangle" data-action="triangle" aria-label="Triangle, grind">△</button>
+                <button type="button" class="touch-btn touch-btn--square" data-action="square" aria-label="Square, flip">□</button>
+                <button type="button" class="touch-btn touch-btn--circle" data-action="circle" aria-label="Circle, grab">○</button>
+                <button type="button" class="touch-btn touch-btn--cross" data-action="cross" aria-label="Cross, ollie">✕</button>
+              </div>
             </div>
 
             <div class="cab__scanlines" aria-hidden="true"></div>
@@ -131,15 +132,31 @@
         </div>
 
         <aside class="rail" aria-label="Setup">
+          <section class="card" id="game-picker">
+            <h2 class="card__title">Select game</h2>
+            <fieldset class="segmented">
+              <legend class="visually-hidden">Choose a game</legend>
+              <label class="segmented__opt">
+                <input type="radio" name="game" value="thps" aria-label="Tony Hawk's Pro Skater, 1999" />
+                <span>THPS <small>1999 · PS1</small></span>
+              </label>
+              <label class="segmented__opt">
+                <input type="radio" name="game" value="thps2" aria-label="Tony Hawk's Pro Skater 2, 2000" />
+                <span>THPS 2 <small>2000 · PS1</small></span>
+              </label>
+            </fieldset>
+            <p class="card__hint">Changing game reloads the player.</p>
+          </section>
+
           <section class="card">
-            <h2 class="card__title">Camera</h2>
+            <h2 class="card__title">Hands</h2>
             <div class="preview">
               <canvas
                 id="preview"
-                width="320"
-                height="240"
+                width="200"
+                height="150"
                 role="img"
-                aria-label="Mirrored camera preview with movement zones and tracked hands."
+                aria-label="Wireframe view of tracked hands."
               ></canvas>
               <p class="preview__off" id="preview-off">
                 Camera off. Switch to gestures to turn it on.
@@ -152,7 +169,7 @@
             <fieldset class="segmented">
               <legend class="visually-hidden">Control scheme</legend>
               <label class="segmented__opt">
-                <input type="radio" name="control-mode" value="gestures" />
+                <input type="radio" name="control-mode" value="gestures" id="mode-gestures" />
                 <span>Gestures</span>
               </label>
               <label class="segmented__opt">
@@ -199,7 +216,8 @@
             <h3>Trick with the right hand</h3>
             <p>
               Open palm is Cross, thumbs up is Circle, peace is Triangle, an L
-              is Square. Point with the left hand for an R2 tap.
+              is Square. Point with the left hand for an R2 tap. Thumbs down
+              pauses the game.
             </p>
           </li>
           <li class="ride__step">
@@ -269,6 +287,12 @@
                 <span class="trick__name">Thumbs up</span>
                 <span class="trick__key">Circle</span>
                 <span class="trick__note">Grab.</span>
+              </li>
+              <li class="trick">
+                <span class="trick__glyph" aria-hidden="true">👎</span>
+                <span class="trick__name">Thumbs down</span>
+                <span class="trick__key">Pause</span>
+                <span class="trick__note">Upright fist, thumb down. Repeat to resume.</span>
               </li>
               <li class="trick">
                 <span class="trick__glyph" aria-hidden="true">✌️</span>
@@ -353,7 +377,7 @@
             <li class="intro__demo">
               <span class="intro__hand intro__hand--cycle" aria-hidden="true">✌️</span>
               <span class="chip">Triangle</span>
-              <p>Peace grinds. Thumbs up grabs, an L flips.</p>
+              <p>Peace grinds. Thumbs up grabs, an L flips. Thumbs down pauses.</p>
             </li>
             <li class="intro__demo">
               <span class="intro__hand intro__hand--fade" aria-hidden="true">✊</span>

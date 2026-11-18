@@ -49,7 +49,8 @@ The **palm center** decides the direction. Both axes are independent, so diagona
 | Gesture | How to make it | Button | Typical THPS use |
 |---|---|---|---|
 | ✋ Open palm | 2+ fingers extended | **Cross** | Hold to crouch, release to ollie |
-| 👍 Thumbs up | Thumb out, fingers curled | **Circle** | Grab |
+| 👍 Thumbs up | Thumb out above index, fingers curled | **Circle** | Grab |
+| 👎 Thumbs down | Upright fist, thumb below index | **Pause** | Toggle pause; repeat to resume |
 | ✌️ Peace sign | Index + middle up, ring + pinky curled | **Triangle** | Special / menu |
 | 🤘 L shape | Thumb + index out, rest curled | **Square** | Grind / manual |
 | ✊ Fist | All fingers curled | — | Releases the held button |
@@ -57,7 +58,7 @@ The **palm center** decides the direction. Both axes are independent, so diagona
 Detection priority (first match wins):
 
 ```text
-peace → L shape → thumbs up → point → open palm → fist
+peace → L shape → thumbs down → thumbs up → point → open palm → fist
 ```
 
 ### The ollie
@@ -110,20 +111,23 @@ If a gesture misfires, check the [tuning table](../README.md#symptom--setting) b
 
 ## Web player
 
-The browser player (`http://localhost:8000` after
-`python -m http.server 8000 --directory web`) uses the same gestures and zones
-above, and adds an **Input** toggle between Gestures and Keyboard. Switching to
-Gestures starts the camera once the game is running; switching to Keyboard
-stops it and uses these keys (identical to the desktop app):
+The browser player (live at [tony-hands.pages.dev](https://tony-hands.pages.dev),
+or `http://localhost:8000` after `python -m http.server 8000 --directory web`)
+always opens in **Keyboard** mode with the Skate layout, so no camera prompt
+appears on arrival. The **Select game** card switches between THPS (1999) and
+THPS 2 (2000) — changing games reloads the player. Choose **Gestures** to switch
+to hand control; the camera starts only then. The keys:
 
 | Keys | Button |
 |---|---|
-| Arrow keys | D-Pad |
-| `Z` / `X` / `S` / `A` | Cross / Circle / Triangle / Square |
-| `Q` / `W` / `E` | L1 / R1 / R2 |
+| `W` `A` `S` `D` | D-Pad |
+| `K` / `L` / `I` / `J` | Cross (ollie) / Circle (grab) / Triangle (grind) / Square (flip) |
+| `Q` / `E` / `Tab` / `O` | L1 / R1 / L2 / R2 |
 | `Enter` / `Shift` | Start / Select |
 
-Open <http://localhost:8000/demo.html> for the gesture test bench — it draws
-the full skeleton overlay and lights chips without booting a game. The in-page
-**Trick sheet** dialog repeats both tables. See [web/README.md](../web/README.md)
-for setup and troubleshooting.
+The **Remap keys** dialog rebinds any button (applies immediately). On touch
+devices the keyboard toggle is hidden and an emulator-style on-screen pad
+appears — no soft keyboard. Open <http://localhost:8000/demo.html> for the
+gesture test bench — it draws the full skeleton overlay and lights chips without
+booting a game. The in-page **Trick sheet** dialog repeats both tables. See
+[web/README.md](../web/README.md) for setup and troubleshooting.

@@ -5,7 +5,9 @@ import {
   buildControls,
   codeToKeyCode,
   DEPLOY,
+  isTouchDevice,
   KEYBOARD_CONTROLS,
+  resolveGame,
   STORAGE_KEYS,
   TRACKING,
   ZONES,
@@ -22,8 +24,9 @@ import {
   getEmulator,
   getGameManager,
 } from "./emulator.js";
-import { drawOverlay } from "./overlay.js";
+import { drawWireframe } from "./overlay.js";
 import { wireDialogs } from "./dialog.js";
+import { bindTouchControls } from "./touch-controls.js";
 
 const els = {
   boot: document.getElementById("boot"),
@@ -39,10 +42,20 @@ const els = {
   previewOff: document.getElementById("preview-off"),
   chips: [...document.querySelectorAll(".chip[data-action]")],
   modeRadios: [...document.querySelectorAll('input[name="control-mode"]')],
+  gameRadios: [...document.querySelectorAll('input[name="game"]')],
   announcer: document.getElementById("announcer"),
   video: document.getElementById("camera"),
   remap: document.getElementById("remap"),
+  touchPad: document.getElementById("touch-pad"),
 };
+
+const touch = isTouchDevice();
+const selectedGame = resolveGame();
+try {
+  localStorage.setItem(STORAGE_KEYS.game, selectedGame.id);
+} catch {
+  // Restricted storage: the selection lasts for this load only.
+}
 
 const previewCtx = els.preview.getContext("2d");
 
@@ -101,6 +114,16 @@ const state = {
   bridge: new PadBridge(getGameManager),
   keyboardHeld: new Set(),
 };
+
+// On-screen pad for touch devices; a no-op object on pointer devices.
+const touchControls = els.touchPad
+  ? bindTouchControls({
+      root: els.touchPad,
+      bridge: state.bridge,
+      isAllowed: () => touch && state.booted && state.mode === "keyboard",
+      onChange: renderChips,
+    })
+  : null;
 
 // ----------------------------------------------------------------- text/UI
 
@@ -171,11 +194,15 @@ function handleEngineStatus(status) {
     setStatus("live", "Watching your hands");
     // Show which delegate MediaPipe chose — CPU fallback explains a slow
     // gesture experience on integrated GPUs / incognito sessions.
-    setModeHint(
-      status.text?.includes("tracking")
-        ? status.text
-        : `Gesture mode · ${state.engine?.delegate ?? "GPU"} tracking. Left hand steers, right hand tricks.`,
-    );
+    const delegate = state.engine?.delegate ?? "GPU";
+    applyDelegateQuality(delegate);
+    if (delegate !== "CPU") {
+      setModeHint(
+        status.text?.includes("tracking")
+          ? status.text
+          : `Gesture mode · ${delegate} tracking. Left hand steers, right hand tricks.`,
+      );
+    }
     els.previewOff.hidden = true;
   } else if (status.state === "busy") {
     setStatus("busy", status.text);
@@ -187,25 +214,31 @@ function handleEngineStatus(status) {
   }
 }
 
+// Wireframe only: hand skeletons, never the camera fill. The hidden <video>
+// still feeds MediaPipe; it is simply not painted.
 function drawPreview() {
   const engine = state.engine;
   const running = Boolean(engine?.running);
-  drawOverlay(previewCtx, {
-    video: els.video,
-    hands: running ? engine.hands : [],
-    fps: engine?.fps ?? 0,
-    running,
-    zones: ZONES,
-    labels: false,
-    hud: false,
-    offText: ["Camera off", ""],
-  });
+  if (!running) {
+    previewCtx.clearRect(0, 0, els.preview.width, els.preview.height);
+    return;
+  }
+  drawWireframe(previewCtx, engine.hands, els.preview.width, els.preview.height);
 }
 
 // ------------------------------------------------------------------- input
 
 function handleInput(event) {
   if (state.mode !== "gestures") return;
+  // Thumbs-down toggles pause. Edge-triggered and never sent to the bridge:
+  // pause is not a RetroPad button, and the matching release must be ignored.
+  if (event.action === "pause") {
+    if (event.press) {
+      releaseEverything();
+      getEmulator()?.togglePlaying();
+    }
+    return;
+  }
   state.bridge.apply(event);
   renderChips();
   if (event.press) announce(`Pressed ${ACTION_LABELS[event.action] ?? event.action}`);
@@ -215,6 +248,7 @@ function releaseEverything(message) {
   state.engine?.releaseAll();
   state.bridge.releaseAll();
   state.keyboardHeld.clear();
+  touchControls?.clear();
   renderChips();
   if (message) announce(message);
 }
@@ -222,6 +256,8 @@ function releaseEverything(message) {
 // -------------------------------------------------------------------- mode
 
 function applyMode(mode, { activateCamera = false } = {}) {
+  // Touch devices are keyboard-only: the on-screen pad replaces gestures.
+  if (touch && mode === "gestures") mode = "keyboard";
   state.mode = mode;
   for (const radio of els.modeRadios) radio.checked = radio.value === mode;
 
@@ -231,8 +267,9 @@ function applyMode(mode, { activateCamera = false } = {}) {
     els.previewOff.hidden = false;
     setModeHint("Keyboard — WASD to steer, I/J/K/L for tricks, O for R2.");
     document.body.dataset.mode = "keyboard";
-    // EJS binds keys to #game; after clicking UI, put focus back so keys work.
-    if (state.booted) document.querySelector("#game")?.focus();
+    // EJS binds keys to #game; refocus after UI clicks so keys work. On touch
+    // devices focusing #game can raise the soft keyboard — never do it there.
+    if (!touch && state.booted) document.querySelector("#game")?.focus();
   } else {
     setModeHint("Gesture mode. Left hand steers, right hand tricks.");
     document.body.dataset.mode = "gestures";
@@ -240,24 +277,34 @@ function applyMode(mode, { activateCamera = false } = {}) {
   }
 }
 
+// When MediaPipe falls back to CPU, throttle to the lighter tier so the
+// emulator keeps its frame budget on weaker laptops.
+function applyDelegateQuality(delegate) {
+  state.engine?.setQuality?.(delegate === "CPU" ? "cpu" : null);
+  if (delegate === "CPU") {
+    setModeHint("Gesture mode · CPU tracking. Lowered to a lighter tier.");
+  }
+}
+
 // ------------------------------------------------------------------- files
 
-async function refreshFiles() {
+async function refreshFiles(game = selectedGame) {
   els.boot.disabled = true;
+  els.gateTitle.textContent = game.label ?? "Tony-Hands";
 
   // On the live build we boot immediately — skip the two HEAD probes (2 RTTs)
   // and let EmulatorJS surface a fetch error if the files are unavailable.
   if (DEPLOY.autoStart) {
     state.filesReady = true;
     setStatus("busy", "Loading the emulator");
-    if (!state.booted) bootGame();
+    if (!state.booted) bootGame(game);
     return;
   }
 
   setStatus("busy", "Loading");
   els.gateHint.textContent = "Loading…";
 
-  const result = await checkGameFiles();
+  const result = await checkGameFiles(game);
   state.filesReady = result.ready;
 
   if (result.ready) {
@@ -277,7 +324,7 @@ async function refreshFiles() {
     setStatus("error", "Game unavailable");
   }
 
-  if (result.ready && DEPLOY.autoStart && !state.booted) bootGame();
+  if (result.ready && DEPLOY.autoStart && !state.booted) bootGame(game);
 }
 
 // ---------------------------------------------------------------- emulator
@@ -309,28 +356,31 @@ function applyRemapLive() {
   }
 }
 
-function bootGame() {
+function bootGame(game = selectedGame) {
   if (!state.filesReady || state.booted) return;
 
   state.booted = true;
+  document.body.dataset.booted = "true";
   els.gate.hidden = true;
   els.boot.disabled = true;
   setStatus("busy", "Loading the emulator");
 
   bootEmulator({
     player: "#game",
+    game,
     controls: buildControls(remap),
     onGameStart: () => {
       applyRemapLive();
       setStatus("live", "Game running");
       if (state.mode === "gestures" && !state.engine?.running) startEngine();
-      // Make sure keys reach EJS immediately after the auto-boot.
-      if (state.mode === "keyboard") document.querySelector("#game")?.focus();
+      // Make sure keys reach EJS immediately after the auto-boot (not on touch).
+      if (!touch && state.mode === "keyboard") document.querySelector("#game")?.focus();
     },
     onExit: () => {
       releaseEverything();
       setStatus("idle", "Emulator stopped");
       state.booted = false;
+      delete document.body.dataset.booted;
       els.boot.disabled = false;
       els.gate.hidden = false;
       els.gateTitle.textContent = "Ready to ride";
@@ -446,7 +496,22 @@ for (const radio of els.modeRadios) {
   });
 }
 
-els.boot.addEventListener("click", bootGame);
+// Game selector: switching navigates with ?game=<id> because EJS reads the
+// ROM URL once at construction, so a fresh page is the reliable path.
+for (const radio of els.gameRadios) {
+  radio.checked = radio.value === selectedGame.id;
+  radio.addEventListener("change", () => {
+    if (!radio.checked || radio.value === selectedGame.id) return;
+    try {
+      localStorage.setItem(STORAGE_KEYS.game, radio.value);
+    } catch {
+      // Restricted storage: the URL still carries the choice.
+    }
+    location.assign(`?game=${encodeURIComponent(radio.value)}`);
+  });
+}
+
+els.boot.addEventListener("click", () => bootGame(selectedGame));
 els.release.addEventListener("click", () => {
   releaseEverything("Inputs released");
   setModeHint("All inputs released. Nothing is held down.");
@@ -493,5 +558,21 @@ window.addEventListener("pagehide", () => {
 
 // ------------------------------------------------------------------- start
 
+if (touch) {
+  document.body.dataset.input = "touch";
+  // Hide the Gestures option entirely on touch devices: camera + MediaPipe +
+  // emulator together are too heavy, and the pad is keyboard-mode only.
+  const gesturesRadio = document.getElementById("mode-gestures");
+  if (gesturesRadio) {
+    gesturesRadio.disabled = true;
+    gesturesRadio.checked = false;
+    const label = gesturesRadio.closest("label");
+    if (label) {
+      label.hidden = true;
+      label.setAttribute("aria-hidden", "true");
+    }
+  }
+}
+
 applyMode("keyboard");
-refreshFiles();
+refreshFiles(selectedGame);

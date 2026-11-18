@@ -32,6 +32,39 @@ test("ActionStateMachine needs two stable frames, fist releases", () => {
   assert.ok(released.some((e) => e.action === "cross" && !e.press));
 });
 
+function thumbLandmarks(thumbDy) {
+  const p = landmarks(() => 0.15); // four fingers curled
+  p[4] = { x: 0.7, y: 0.5 + thumbDy, z: 0 }; // thumb extended away from index MCP
+  return p;
+}
+
+test("thumbs up and thumbs down are distinguished by thumb direction", () => {
+  assert.equal(classifyGesture(thumbLandmarks(-0.12)), "thumbs_up");
+  assert.equal(classifyGesture(thumbLandmarks(0.12)), "thumbs_down");
+});
+
+test("thumbs down wins over thumbs up priority, fist still catches tucked thumb", () => {
+  // A peace sign with a downward thumb is still peace (extended fingers win).
+  const peace = landmarks((i) => (i < 2 ? -0.15 : 0.15));
+  peace[4] = { x: 0.7, y: 0.62, z: 0 };
+  assert.equal(classifyGesture(peace), "peace");
+  // Tucked thumb (not extended) with curled fingers is a fist, not a thumb.
+  const fist = landmarks(() => 0.15);
+  fist[4] = { x: 0.5, y: 0.55, z: 0 }; // within the 0.08 thumb-extend radius
+  assert.equal(classifyGesture(fist), "fist");
+});
+
+test("thumbs down maps to an edge-triggered pause event", () => {
+  const s = new ActionStateMachine({ stableFrames: 2, releaseCooldownMs: 90 });
+  assert.deepEqual(s.update("thumbs_down"), []);
+  const pressed = s.update("thumbs_down");
+  assert.ok(pressed.some((e) => e.action === "pause" && e.press));
+  s.tick(100);
+  assert.deepEqual(s.update("fist"), []);
+  const released = s.update("fist");
+  assert.ok(released.some((e) => e.action === "pause" && !e.press));
+});
+
 test("R2TapStateMachine only fires for point with the left hand", () => {
   const s = new R2TapStateMachine({ cooldownMs: 250, stableFrames: 2, holdMs: 120 });
   assert.deepEqual(s.update("palm"), []);

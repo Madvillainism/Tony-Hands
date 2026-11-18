@@ -386,61 +386,81 @@ body[data-status="live"] .cab__scanlines {
   display: none;
 }
 
-/* Gesture cheat-sheet over the game: centered horizontally, kept low so the
-   playfield stays visible. pointer-events:none leaves EJS focus untouched. */
-.gesture-hud {
+/* Emulator-style on-screen pad. Only shown on touch devices while a game is
+   live in keyboard mode; pointer-events are re-enabled on the buttons only. */
+.touch-pad {
   position: absolute;
   inset: auto 0 0;
-  z-index: 2;
-  display: grid;
-  justify-items: center;
-  gap: 0.35rem;
-  padding: 0.5rem 0.75rem;
-  background: rgba(11, 11, 13, 0.82);
-  border-block-start: 2px solid var(--yellow);
-  text-align: center;
-  pointer-events: none;
-}
-
-.gesture-hud[hidden],
-body[data-mode="keyboard"] .gesture-hud {
+  z-index: 4;
   display: none;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2vmin;
+  padding: 2vmin;
+  background: linear-gradient(to top, rgba(11, 11, 13, 0.82), rgba(11, 11, 13, 0));
+  pointer-events: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
-
-.gesture-hud__title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 1rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--yellow);
+body[data-status="live"][data-mode="keyboard"][data-input="touch"] .touch-pad {
+  display: flex;
 }
-
-.gesture-hud__grid {
+.touch-pad__dpad {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  max-inline-size: 34rem;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  gap: 0.4vmin;
+  pointer-events: auto;
 }
-
-.gesture-hud__grid h3 {
-  margin: 0;
+.touch-btn--up { grid-area: 1 / 2; }
+.touch-btn--left { grid-area: 2 / 1; }
+.touch-btn--right { grid-area: 2 / 3; }
+.touch-btn--down { grid-area: 3 / 2; }
+.touch-pad__face {
+  display: grid;
+  grid-template: repeat(2, 1fr) / repeat(2, 1fr);
+  gap: 0.8vmin;
+  pointer-events: auto;
+}
+.touch-pad__center,
+.touch-pad__shoulders,
+.touch-pad__system {
+  display: flex;
+  gap: 0.8vmin;
+  pointer-events: auto;
+}
+.touch-pad__center {
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5vmin;
+}
+.touch-btn {
+  min-inline-size: 44px;
+  min-block-size: 44px;
+  inline-size: clamp(44px, 9vmin, 72px);
+  block-size: clamp(44px, 9vmin, 72px);
+  display: grid;
+  place-items: center;
   font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--bone-dim);
-}
-
-.gesture-hud__grid p {
-  margin: 0;
-  font-size: 0.74rem;
+  font-size: clamp(0.7rem, 2.2vmin, 0.95rem);
   color: var(--bone);
+  background: rgba(29, 29, 35, 0.55);
+  border: 2px solid rgba(246, 241, 227, 0.5);
+  border-radius: 50%;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
-
-.chips--hud {
-  justify-content: center;
+.touch-btn.is-active {
+  background: var(--yellow);
+  color: var(--ink);
+  transform: scale(0.94);
 }
+/* Our pad replaces EJS's built-in virtual gamepad. */
+.ejs_virtualGamepad_parent { display: none !important; }
 
 .gate {
   position: absolute;
@@ -584,6 +604,10 @@ body[data-mode="keyboard"] .gesture-hud {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   border-block-end: 3px solid var(--orange);
+}
+
+body[data-booted="true"] #game-picker .card__title::after {
+  content: " (change)";
 }
 
 .card__sub {

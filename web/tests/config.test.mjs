@@ -15,7 +15,49 @@ const {
   isReserved,
   conflictWith,
   sanitizeRemap,
+  GAMES,
+  DEFAULT_GAME_ID,
+  resolveGame,
+  isTouchDevice,
+  STORAGE_KEYS,
+  MEDIAPIPE,
 } = await loadModule("../config.js");
+
+test("game registry holds both PS1 titles with a selector default", () => {
+  assert.deepEqual(
+    GAMES.map((g) => g.id),
+    ["thps", "thps2"],
+  );
+  assert.equal(DEFAULT_GAME_ID, "thps");
+  assert.equal(GAMES[1].rom, "games/thps2/thps2.chd");
+  assert.equal(STORAGE_KEYS.game, "tony-hands:game");
+});
+
+test("resolveGame prefers URL, then saved choice, then default", () => {
+  assert.equal(resolveGame({ search: "?game=thps2", storage: null }).id, "thps2");
+  assert.equal(
+    resolveGame({
+      search: "",
+      storage: { getItem: () => "thps2" },
+    }).id,
+    "thps2",
+  );
+  assert.equal(resolveGame({ search: "?game=nope", storage: null }).id, "thps");
+  assert.equal(resolveGame({ search: "", storage: null }).id, "thps");
+});
+
+test("isTouchDevice detects coarse pointers and touch points", () => {
+  assert.equal(isTouchDevice({ matchMedia: () => ({ matches: true }) }), true);
+  assert.equal(isTouchDevice({ navigator: { maxTouchPoints: 1 } }), true);
+  assert.equal(isTouchDevice({}), false);
+});
+
+test("MediaPipe thresholds are config-driven", () => {
+  assert.equal(MEDIAPIPE.numHands, 2);
+  assert.equal(MEDIAPIPE.minDetectionConfidence, 0.7);
+  assert.equal(MEDIAPIPE.idleFps, 4);
+  assert.equal(MEDIAPIPE.idleAfterMs, 2000);
+});
 
 test("pcsx_rearmed is the only core", () => {
   assert.equal(CORES.length, 1);

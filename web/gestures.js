@@ -9,6 +9,7 @@ export const GESTURES = Object.freeze({
   PEACE: "peace",
   L_SHAPE: "l_shape",
   THUMBS_UP: "thumbs_up",
+  THUMBS_DOWN: "thumbs_down",
   POINT: "point",
   PALM: "palm",
   FIST: "fist",
@@ -53,7 +54,19 @@ function isThumbsUp(lms) {
     isCurled(lms, 8, 5) &&
     isCurled(lms, 12, 9) &&
     isCurled(lms, 16, 13) &&
-    isCurled(lms, 20, 17)
+    isCurled(lms, 20, 17) &&
+    lms[THUMB_TIP].y < lms[INDEX_MCP].y
+  );
+}
+
+function isThumbsDown(lms) {
+  return (
+    isThumbExtended(lms) &&
+    isCurled(lms, 8, 5) &&
+    isCurled(lms, 12, 9) &&
+    isCurled(lms, 16, 13) &&
+    isCurled(lms, 20, 17) &&
+    lms[THUMB_TIP].y > lms[INDEX_MCP].y
   );
 }
 
@@ -77,6 +90,7 @@ function isOpenPalm(lms) {
 export function classifyGesture(lms) {
   if (isPeace(lms)) return GESTURES.PEACE;
   if (isLShape(lms)) return GESTURES.L_SHAPE;
+  if (isThumbsDown(lms)) return GESTURES.THUMBS_DOWN;
   if (isThumbsUp(lms)) return GESTURES.THUMBS_UP;
   if (isPoint(lms)) return GESTURES.POINT;
   if (isOpenPalm(lms)) return GESTURES.PALM;
@@ -272,6 +286,7 @@ const GESTURE_TO_ACTION = {
   peace: "triangle",
   l_shape: "square",
   thumbs_up: "circle",
+  thumbs_down: "pause",
 };
 
 export class ActionStateMachine {

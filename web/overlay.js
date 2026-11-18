@@ -27,6 +27,31 @@ const COLORS = {
 const FONT = "600 13px ui-sans-serif, system-ui, sans-serif";
 const MONO = "600 13px ui-monospace, SFMono-Regular, Consolas, monospace";
 
+// Lightweight wireframe view for the play page: hand skeletons only, no camera
+// fill, zone grid, labels or HUD. Landmarks arrive with raw x; the engine
+// mirrors palm x, so mirror landmarks the same way to keep both in agreement.
+export function drawWireframe(ctx, hands, width, height) {
+  ctx.clearRect(0, 0, width, height);
+  for (const hand of hands) {
+    const pts = hand.landmarks;
+    if (!pts || pts.length < 21) continue;
+    const px = (p) => (1 - p.x) * width;
+    const py = (p) => p.y * height;
+    ctx.strokeStyle = hand.side === "left" ? COLORS.left : COLORS.right;
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    for (const [from, to] of HAND_CONNECTIONS) {
+      ctx.moveTo(px(pts[from]), py(pts[from]));
+      ctx.lineTo(px(pts[to]), py(pts[to]));
+    }
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(hand.x * width, hand.y * height, 5, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
 export function drawOverlay(ctx, options) {
   const {
     video = null,

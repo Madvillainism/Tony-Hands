@@ -35,8 +35,11 @@ async function head(url) {
 }
 
 /** Probe the files the player needs before spending time on the emulator. */
-export async function checkGameFiles() {
-  const [rom, bios] = await Promise.all([head(GAME.rom), head(GAME.bios)]);
+export async function checkGameFiles(game = GAME) {
+  const [rom, bios] = await Promise.all([
+    head(game.rom),
+    head(game.bios ?? GAME.bios),
+  ]);
   return { rom, bios, ready: rom.present && bios.present };
 }
 
@@ -62,15 +65,15 @@ let bootPromise = null;
  * @param {() => void} [options.onExit]
  * @returns {Promise<object>} the EJS_emulator instance
  */
-export function bootEmulator({ player, controls = KEYBOARD_CONTROLS, onGameStart, onExit }) {
+export function bootEmulator({ player, game = GAME, controls = KEYBOARD_CONTROLS, onGameStart, onExit }) {
   if (bootPromise) return bootPromise;
 
   bootPromise = new Promise((resolve, reject) => {
     window.EJS_player = player;
     window.EJS_core = RETRO_CORE;
-    window.EJS_gameUrl = GAME.rom;
-    window.EJS_biosUrl = GAME.bios;
-    window.EJS_gameName = GAME.name;
+    window.EJS_gameUrl = game.rom;
+    window.EJS_biosUrl = game.bios ?? GAME.bios;
+    window.EJS_gameName = game.label ?? GAME.name;
     window.EJS_pathtodata = DATA_PATH;
     window.EJS_startOnLoaded = DEPLOY.autoStart;
     // Threads need COOP/COEP headers, which a plain static server does not
@@ -82,8 +85,12 @@ export function bootEmulator({ player, controls = KEYBOARD_CONTROLS, onGameStart
     // ("es"), but the CDN only publishes region variants ("es-ES"), so the
     // 404 aborts startup before EJS_emulator exists.
     window.EJS_language = "en-US";
-    // Avoid the redundant localization/<lang>.json fetch on every boot.
-    window.EJS_disableAutoLang = false;
+    // true disables auto language detection (and its localization JSON fetch).
+    window.EJS_disableAutoLang = true;
+    // Touch devices use our own on-screen pad, never EJS's virtual gamepad or
+    // the soft keyboard. EJS focuses a tabindex=-1 div on start; suppress it.
+    window.EJS_VirtualGamepadSettings = [];
+    window.EJS_noAutoFocus = true;
     window.EJS_alignStartButton = "center";
     window.EJS_color = "#ff5a1f";
     window.EJS_backgroundColor = "#0b0b0d";
@@ -94,6 +101,8 @@ export function bootEmulator({ player, controls = KEYBOARD_CONTROLS, onGameStart
     window.EJS_onExit = () => onExit?.();
     window.EJS_onGameStart = () => {
       const emulator = getEmulator();
+      // Never let EJS's built-in gamepad appear over our touch controls.
+      emulator?.toggleVirtualGamepad?.(false);
       onGameStart?.(emulator);
       resolve(emulator);
     };

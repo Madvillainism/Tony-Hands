@@ -2,12 +2,14 @@
 
 **[Play it live: tony-hands.pages.dev](https://tony-hands.pages.dev)**
 
-Play Tony Hawk's Pro Skater in the browser with **hand gestures or a keyboard**.
-The page runs [EmulatorJS](https://emulatorjs.org) and feeds it the same gesture
-state machines the desktop app uses via MediaPipe Hand Landmarker.
+Play Tony Hawk's Pro Skater **1 or 2** in the browser with **hand gestures or a
+keyboard**. The page runs [EmulatorJS](https://emulatorjs.org) and feeds it the
+same gesture state machines the desktop app uses via MediaPipe Hand Landmarker.
+Use the **Select game** card to switch between the two PS1 titles.
 
 - No build step, no dependencies to install.
-- Gesture controls and a keyboard toggle, matching the desktop key map.
+- Gesture controls and a WASD/IJKL keyboard layout, remappable in-page.
+- Emulator-style on-screen buttons on touch devices — never the soft keyboard.
 - A separate gesture test bench at [`demo.html`](demo.html) for quick checks.
 
 > **Public build vs local build:** the live site streams its game files from a
@@ -38,25 +40,29 @@ npx --yes serve web          # http://localhost:3000
 
 ## Your files
 
-The player needs two files in `web/games/` (both git-ignored, both yours to
+The player reads its files from `web/games/` (all git-ignored, all yours to
 supply). See [`games/README.md`](games/README.md) for exact paths and BIOS
 hashes.
 
 ```text
 web/games/
-├── thps.bin        # your PS1 disc image
-└── scph5501.bin    # PS1 BIOS (North America)
+├── thps.bin                    # THPS 1 (early dev builds)
+├── thps.chd                    # THPS 1, compressed
+├── thps2/thps2.chd             # THPS 2, compressed
+└── scph5501.bin                # PS1 BIOS (North America)
 ```
 
-On first boot EmulatorJS downloads its runtime and core from
-`cdn.emulatorjs.org` (~10 MB), then reads the ~600 MB disc image from localhost.
+The live site streams CHD images from a public asset host; local dev uses these
+files directly. On first boot EmulatorJS downloads its runtime and core from
+`cdn.emulatorjs.org` (~10 MB), then reads the disc image.
 
 ---
 
 ## Controls
 
-Switch between **Gestures** and **Keyboard** in the Input card at any time.
-Switching to gestures starts the camera; switching to keyboard stops it.
+The page opens in **Keyboard** mode. Switch to **Gestures** in the Input card
+to start the camera; switching back stops it. Touch devices are keyboard-only
+and show an on-screen pad instead.
 
 ### Gestures
 
@@ -64,10 +70,16 @@ Switching to gestures starts the camera; switching to keyboard stops it.
 |---|---|---|
 | ✋ Open palm | Cross | Crouch and hold; make a fist to ollie |
 | 👍 Thumbs up | Circle | Grab |
+| 👎 Thumbs down | Pause | Upright fist, thumb down; repeat to resume |
 | ✌️ Peace sign | Triangle | Grind |
 | 🤘 L shape | Square | Flip trick |
 | ☝️ Point (left hand) | R2 tap | 120 ms press, 250 ms cooldown |
 | ✊ Fist | Release | Drops whatever is held |
+
+Gesture mode draws a lightweight **wireframe** of tracked hands (skeletons
+only, no camera video) to keep CPU cost low. When no hands are visible the
+inference rate drops automatically; if MediaPipe falls back to CPU tracking a
+lighter quality tier is applied.
 
 The **left hand** steers using palm position: left/right/up/down zones with a
 5% hysteresis band, and both axes can be active at once for diagonals. The
@@ -76,23 +88,22 @@ inputs so nothing sticks.
 
 ### Keyboard
 
-Same layout as the desktop app (see `src/bridge/key_mapper.py`):
+The default Skate layout (remap any key with the **Remap keys** dialog):
 
 | Keys | Button |
 |---|---|
-| Arrow keys | D-Pad |
-| `Z` | Cross |
-| `X` | Circle |
-| `S` | Triangle |
-| `A` | Square |
-| `Q` | L1 |
-| `W` | R1 |
-| `E` | R2 |
-| `Enter` | Start |
-| `Shift` | Select |
+| `W` `A` `S` `D` | D-Pad |
+| `K` | Cross · ollie |
+| `L` | Circle · grab |
+| `I` | Triangle · grind |
+| `J` | Square · flip |
+| `Q` / `E` / `Tab` / `O` | L1 / R1 / L2 / R2 |
+| `Enter` / `Shift` | Start / Select |
 
-EmulatorJS receives real key events in keyboard mode; the chips are a readout.
-The in-page **Trick sheet** dialog repeats both tables.
+On a touch device, use the emulator-style on-screen buttons instead — they feed
+the same inputs and never raise the soft keyboard. EmulatorJS receives real key
+events in keyboard mode; the chips are a readout. The in-page **Trick sheet**
+dialog repeats both tables.
 
 ---
 
@@ -280,10 +291,11 @@ confirm the game reaches the title screen with no CORS errors in DevTools.
 
 ## Status
 
-- [x] Camera + MediaPipe WASM + zone overlay + input readout
+- [x] Camera + MediaPipe WASM + wireframe hand readout
 - [x] Gesture test bench (`demo.html`)
-- [x] Playable THPS in the browser with EmulatorJS
-- [x] Gesture / keyboard toggle
+- [x] Playable THPS 1 and THPS 2 with a game selector
+- [x] Gesture / keyboard toggle, in-page key remapping
+- [x] Touch on-screen pad, pause gesture, CPU-friendly quality tiers
 - [ ] Browser as a wireless controller for desktop RetroArch (idea)
 - [x] Live at [tony-hands.pages.dev](https://tony-hands.pages.dev) (Cloudflare Pages + R2 — recipe above)
 

@@ -35,10 +35,10 @@ function loadLandmarker() {
           delegate: "GPU",
         },
         runningMode: "VIDEO",
-        numHands: 2,
-        minHandDetectionConfidence: 0.7,
-        minHandPresenceConfidence: 0.7,
-        minTrackingConfidence: 0.5,
+        numHands: MEDIAPIPE.numHands,
+        minHandDetectionConfidence: MEDIAPIPE.minDetectionConfidence,
+        minHandPresenceConfidence: MEDIAPIPE.minHandPresenceConfidence,
+        minTrackingConfidence: MEDIAPIPE.minTrackingConfidence,
       };
 
       try {
@@ -107,10 +107,29 @@ export class GestureEngine {
     this.lastInferenceAt = 0;
     this.lastFrameAt = 0;
     this.lastDt = 0;
+    this.delegate = null;
+    this.quality = null;
+    this.lastHandsAt = performance.now();
+    this.emptyStreak = 0;
   }
 
   get minFrameMs() {
-    return this.tracking.fps > 0 ? 1000 / this.tracking.fps : 0;
+    // Idle backoff: when no hands have been seen for a while, infer less often.
+    const idle =
+      this.emptyStreak > 0 && performance.now() - this.lastHandsAt > MEDIAPIPE.idleAfterMs;
+    const fps = idle
+      ? Math.min(this.tracking.fps, MEDIAPIPE.idleFps)
+      : this.tracking.fps;
+    return fps > 0 ? 1000 / fps : 0;
+  }
+
+  // Delegate-driven quality: "cpu" uses the lighter tier, null restores the
+  // configured one. The tracking object is swapped, not mutated, so the
+  // caller's TRACKING.play config stays pristine.
+  setQuality(name) {
+    if (name === this.quality) return;
+    this.quality = name;
+    this.tracking = name === "cpu" ? TRACKING.cpu : TRACKING.play;
   }
 
   async start() {
@@ -319,6 +338,12 @@ export class GestureEngine {
     }
 
     this.hands = hands;
+    if (hands.length === 0) {
+      this.emptyStreak += 1;
+    } else {
+      this.emptyStreak = 0;
+      this.lastHandsAt = now;
+    }
     this.onHands(hands);
     this.route(hands, dtMs);
   }

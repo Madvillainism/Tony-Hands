@@ -8,9 +8,25 @@
 // to the local web/games/ paths, so localhost and the Node tests need no setup.
 const assets = globalThis.TONY_HANDS_ASSETS ?? {};
 
+// The game picker offers both PS1 titles. Remote builds inject a `games` array
+// with the R2 CHD URLs; local dev falls back to files under web/games/.
+const FALLBACK_GAMES = [
+  { id: "thps", label: "Tony Hawk's Pro Skater", rom: "games/thps.bin", year: 1999 },
+  { id: "thps2", label: "Tony Hawk's Pro Skater 2", rom: "games/thps2/thps2.chd", year: 2000 },
+];
+
+export const GAMES = Object.freeze(
+  (Array.isArray(assets.games) && assets.games.length ? assets.games : FALLBACK_GAMES).map(
+    (game) => Object.freeze({ ...game }),
+  ),
+);
+
+export const DEFAULT_GAME_ID = GAMES[0].id;
+
+// Kept for compatibility: the first game is the default when no selector runs.
 export const GAME = Object.freeze({
   name: "Tony Hands",
-  rom: assets.rom ?? "games/thps.bin",
+  rom: assets.rom ?? GAMES[0].rom,
   bios: assets.bios ?? "games/scph5501.bin",
 });
 
@@ -54,6 +70,14 @@ export const MEDIAPIPE = Object.freeze({
   wasmUrl: "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm",
   modelUrl:
     "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+  // Detection thresholds are tunables, not magic numbers in the engine.
+  minDetectionConfidence: 0.7,
+  minHandPresenceConfidence: 0.7,
+  minTrackingConfidence: 0.5,
+  numHands: 2,
+  // When no hands are visible for this long, inference drops to idleFps.
+  idleAfterMs: 2000,
+  idleFps: 4,
 });
 
 // Two tracking budgets, because playing is the expensive one: the emulator
@@ -61,15 +85,20 @@ export const MEDIAPIPE = Object.freeze({
 // game is on screen. `fps: 0` means "every frame the camera provides".
 // Gesture quality: "low" (default on the live build) keeps the single-threaded
 // emulator responsive by inferring at 12 fps and repainting the preview at 5.
-// "high" restores 20/20 for capable machines. Override via deploy-config.js.
-const quality = assets.quality === "high" ? "high" : "low";
+// "high" restores 20/20 for capable machines. "cpu" is selected automatically
+// when MediaPipe falls back to CPU, easing the load on weaker laptops.
+const QUALITY = Object.freeze({
+  low: { width: 320, height: 240, fps: 12, previewFps: 5 },
+  high: { width: 320, height: 240, fps: 20, previewFps: 20 },
+  cpu: { width: 320, height: 240, fps: 8, previewFps: 4 },
+});
 
 export const TRACKING = Object.freeze({
   play: Object.freeze(
-    quality === "high"
-      ? { width: 320, height: 240, fps: 20, previewFps: 20 }
-      : { width: 320, height: 240, fps: 12, previewFps: 5 },
+    QUALITY[assets.quality] ?? QUALITY.low,
   ),
+  // For CPU fallback: applied on top of the selected tier when delegate === CPU.
+  cpu: Object.freeze(QUALITY.cpu),
   demo: Object.freeze({ width: 640, height: 480, fps: 0, previewFps: 0 }),
 });
 
@@ -77,6 +106,45 @@ export const STORAGE_KEYS = Object.freeze({
   core: "tony-hands:core",
   remap: "tony-hands:key-remap",
   introSeen: "tony-hands:gesture-intro-seen",
+  game: "tony-hands:game",
+});
+
+// URL ?game= wins over a remembered pick, then the registry default.
+// Parameters keep this pure so Node tests need no browser globals.
+export function resolveGame({ search, storage } = {}) {
+  const query = search ?? (typeof location !== "undefined" ? location.search : "");
+  const store = storage ?? (typeof localStorage !== "undefined" ? localStorage : null);
+  let id = null;
+  try {
+    id = new URLSearchParams(query).get("game");
+  } catch {
+    /* invalid query string */
+  }
+  if (!id && store) {
+    try {
+      id = store.getItem(STORAGE_KEYS.game);
+    } catch {
+      /* restricted storage */
+    }
+  }
+  return (
+    GAMES.find((game) => game.id === id) ??
+    GAMES.find((game) => game.id === DEFAULT_GAME_ID) ??
+    GAMES[0]
+  );
+}
+
+// Touch devices get emulator-style on-screen buttons, never the soft keyboard.
+// Pure helper: pass a window-like object so Node tests need no DOM.
+export function isTouchDevice(win = globalThis) {
+  return Boolean(
+    win.matchMedia?.("(pointer: coarse)").matches ||
+      (win.navigator?.maxTouchPoints ?? 0) > 0,
+  );
+}
+
+export const TOUCH = Object.freeze({
+  minTargetPx: 44,
 });
 
 // The single keyboard mapping: WASD steers; I/J/K/L are grind/flip/ollie/grab;

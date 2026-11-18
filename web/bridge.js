@@ -40,6 +40,7 @@ export const ACTION_LABELS = Object.freeze({
   r2: "R2",
   start: "Start",
   select: "Select",
+  pause: "Pause",
 });
 
 export class PadBridge {

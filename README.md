@@ -421,10 +421,10 @@ Details, latency budget, and the module map are in **[docs/SETUP.md](docs/SETUP.
 ## Web version
 
 There is a **playable browser version** in **`web/`**, live at
-**[tony-hands.pages.dev](https://tony-hands.pages.dev)**. It runs the same PS1
-disc through EmulatorJS and lets you switch between hand gestures and the
-keyboard — the same key map as the desktop app. No install, no Python, no
-account.
+**[tony-hands.pages.dev](https://tony-hands.pages.dev)**. It runs **THPS 1 and
+THPS 2** (the original PS1 games) through EmulatorJS, with a game selector and
+a choice of hand gestures or the WASD/IJKL keyboard layout. No install, no
+Python, no account. Touch devices get an on-screen pad instead of the keyboard.
 
 ```powershell
 # from the repository root
@@ -447,7 +447,8 @@ of `src/`, with the same thresholds.
 |---|---|
 | ✅ Done | Browser camera + MediaPipe WASM + zone overlay + input readout |
 | ✅ Done | Gesture test bench (`demo.html`) |
-| ✅ Done | Play THPS in the browser with gesture/keyboard toggle |
+| ✅ Done | Play THPS 1 and 2 in the browser, with a game selector |
+| ✅ Done | Gesture/keyboard toggle, key remapping, touch pad, pause gesture |
 | ✅ Done | Live deployment at [tony-hands.pages.dev](https://tony-hands.pages.dev) |
 | 💡 Idea | Browser as a wireless controller for desktop RetroArch (WebSocket bridge) |
 

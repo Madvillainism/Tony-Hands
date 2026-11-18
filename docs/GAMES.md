@@ -45,12 +45,15 @@ That is it — the gestures now drive that core. Buttons the game does not use s
 
 ### Web player
 
-The browser player plays the same PS1 disc through EmulatorJS's `pcsx_rearmed`
-core, so the game-agnostic gesture layer applies there too (no window focus —
-inputs go straight to the emulator). Copy your own `.bin` and BIOS into
-`web/games/` and open <http://localhost:8000>. The Input card switches between
-gestures and the keyboard map above. Other disc-based systems would need their
-own EmulatorJS core and local files; see [web/README.md](../web/README.md).
+The browser player ([tony-hands.pages.dev](https://tony-hands.pages.dev)) plays
+**THPS 1 and THPS 2 (the original PS1 games — not the 2020 remake)** through
+EmulatorJS's `pcsx_rearmed` core. The **Select game** card switches between them;
+inputs go straight to the emulator (no window focus needed). Locally, copy your
+own disc images and BIOS into `web/games/` and open <http://localhost:8000>. The
+Input card switches between gestures and the keyboard map above; on touch
+devices an on-screen pad replaces the keyboard. Other disc-based systems would
+need their own EmulatorJS core and local files; see
+[web/README.md](../web/README.md).
 
 ---
 
