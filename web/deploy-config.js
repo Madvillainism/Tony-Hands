@@ -6,7 +6,7 @@
 // dist/ with the public R2 URLs and production flags.
 
 globalThis.TONY_HANDS_ASSETS ??= {
-  rom: "games/thps.bin",
+  rom: "games/thps.chd",
   bios: "games/scph5501.bin",
   autoStart: false,
   defaultMode: "gestures",
