@@ -6,12 +6,15 @@ const {
   CORES,
   GAME,
   DEPLOY,
-  DESKTOP_CONTROLS,
-  SKATE_CONTROLS,
-  CONTROL_PRESETS,
-  DEFAULT_PRESET,
-  keyNameToCode,
+  KEYBOARD_CONTROLS,
   ZONES,
+  keyNameToCode,
+  codeToKeyName,
+  codeToKeyCode,
+  buildControls,
+  isReserved,
+  conflictWith,
+  sanitizeRemap,
 } = await loadModule("../config.js");
 
 test("pcsx_rearmed is the only core", () => {
@@ -22,45 +25,37 @@ test("pcsx_rearmed is the only core", () => {
 test("without a deploy override, paths are local and auto-start is off", () => {
   assert.equal(GAME.rom, "games/thps.bin");
   assert.equal(GAME.bios, "games/scph5501.bin");
-  assert.deepEqual(DEPLOY, { autoStart: false, defaultMode: "gestures" });
+  assert.equal(DEPLOY.autoStart, false);
+  assert.equal(DEPLOY.defaultMode, "keyboard");
+  assert.equal(DEPLOY.cacheLimit, 1073741824);
 });
 
 test("a deploy override switches to remote assets and keyboard auto-start", async () => {
   const { readFile } = await import("node:fs/promises");
   let src = await readFile(new URL("../config.js", import.meta.url), "utf8");
-  // Append a unique comment so the data URL differs and Node loads a fresh
-  // module instance instead of reusing the one imported at the top.
   src += `\n// fresh ${Date.now()}\n`;
   globalThis.TONY_HANDS_ASSETS = {
     rom: "https://example.r2.dev/thps.bin",
     bios: "https://example.r2.dev/scph5501.bin",
     autoStart: true,
-    defaultMode: "keyboard",
+    cacheLimit: 0,
   };
   try {
     const mod = await import(
       "data:text/javascript;base64," + Buffer.from(src).toString("base64")
     );
     assert.equal(mod.GAME.rom, "https://example.r2.dev/thps.bin");
-    assert.equal(mod.GAME.bios, "https://example.r2.dev/scph5501.bin");
-    assert.deepEqual(mod.DEPLOY, { autoStart: true, defaultMode: "keyboard" });
+    assert.equal(mod.DEPLOY.autoStart, true);
+    assert.equal(mod.DEPLOY.defaultMode, "keyboard");
+    assert.equal(mod.DEPLOY.cacheLimit, 0);
   } finally {
     delete globalThis.TONY_HANDS_ASSETS;
   }
 });
 
-test("controller table has all four players and the desktop key map", () => {
-  for (const player of [0, 1, 2, 3]) assert.ok(DESKTOP_CONTROLS[player], `player ${player}`);
-  const p0 = DESKTOP_CONTROLS[0];
-  assert.equal(p0[0].value, "z");
-  assert.equal(p0[8].value, "x");
-  assert.equal(p0[9].value, "s");
-  assert.equal(p0[1].value, "a");
-});
-
-test("skate preset maps WASD, IJKL and O with unique keys", () => {
-  for (const player of [0, 1, 2, 3]) assert.ok(SKATE_CONTROLS[player]);
-  const p = SKATE_CONTROLS[0];
+test("single keyboard mapping is WASD/IJKL/O with unique keys", () => {
+  for (const player of [0, 1, 2, 3]) assert.ok(KEYBOARD_CONTROLS[player]);
+  const p = KEYBOARD_CONTROLS[0];
   const expected = {
     0: "k", // Cross / ollie
     1: "j", // Square / flip
@@ -80,24 +75,39 @@ test("skate preset maps WASD, IJKL and O with unique keys", () => {
   }
   const names = Object.values(p).map((entry) => entry.value);
   assert.equal(new Set(names).size, names.length, "no duplicate keys");
-  // value2 labels must stay identical across presets.
-  for (const index of Object.keys(p)) {
-    assert.equal(p[index].value2, DESKTOP_CONTROLS[0][index].value2);
-  }
 });
 
-test("presets registry exposes both layouts", () => {
-  assert.equal(DEFAULT_PRESET, "desktop");
-  assert.deepEqual(Object.keys(CONTROL_PRESETS), ["desktop", "skate"]);
-  assert.equal(CONTROL_PRESETS.skate.controls, SKATE_CONTROLS);
-});
-
-test("keyNameToCode handles EJS key names", () => {
+test("key conversion helpers round-trip", () => {
   assert.equal(keyNameToCode("w"), "KeyW");
   assert.equal(keyNameToCode("up arrow"), "ArrowUp");
   assert.equal(keyNameToCode("enter"), "Enter");
   assert.equal(keyNameToCode("shift"), "ShiftLeft");
   assert.equal(keyNameToCode(""), null);
+  assert.equal(codeToKeyName("KeyW"), "w");
+  assert.equal(codeToKeyName("ArrowUp"), "up arrow");
+  assert.equal(codeToKeyName("Tab"), "tab");
+  assert.equal(codeToKeyName("Key1"), null);
+  assert.equal(codeToKeyCode("KeyW"), 87);
+  assert.equal(codeToKeyCode("ArrowUp"), 38);
+  assert.equal(codeToKeyCode("Tab"), 9);
+});
+
+test("buildControls applies remap overrides by action", () => {
+  const controls = buildControls({ cross: "KeyG", dpad_up: "ArrowUp" });
+  assert.equal(controls[0][0].value, "g");
+  assert.equal(controls[0][4].value, "up arrow");
+  assert.equal(controls[0][9].value, "i", "untouched action stays default");
+  assert.notEqual(controls, KEYBOARD_CONTROLS, "returns a deep clone");
+  for (const player of [1, 2, 3]) assert.deepEqual(controls[player], {});
+});
+
+test("remap validation rejects reserved and duplicate keys", () => {
+  assert.equal(isReserved("Tab"), true);
+  assert.equal(isReserved("KeyG"), false);
+  const clean = sanitizeRemap({ cross: "KeyG", bogus: "KeyX", r2: "Tab" });
+  assert.deepEqual(clean, { cross: "KeyG" });
+  assert.equal(conflictWith({ cross: "KeyG" }, "circle", "KeyG"), true);
+  assert.equal(conflictWith({}, "circle", "KeyG"), false);
 });
 
 test("vertical zones are tighter than the desktop defaults", () => {

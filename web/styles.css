@@ -1303,6 +1303,39 @@ kbd {
   margin-block-start: 1rem;
 }
 
+/* ------------------------------------------------------------- remap sheet */
+
+.remap__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.remap__grid button {
+  inline-size: 100%;
+  padding: 0.45rem 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-align: start;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  border-block-end-width: 3px;
+  cursor: pointer;
+}
+
+.remap__grid button:hover {
+  border-color: var(--orange);
+}
+
+.remap__grid button[data-capturing="true"] {
+  background: var(--yellow);
+  border-color: var(--ink);
+}
+
 /* ------------------------------------------------------------- motion pref */
 
 @media (prefers-reduced-motion: no-preference) {

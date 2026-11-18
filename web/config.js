@@ -14,12 +14,14 @@ export const GAME = Object.freeze({
   bios: assets.bios ?? "games/scph5501.bin",
 });
 
-// Production build sets autoStart + keyboard-first so the game boots on arrival
-// without a camera permission prompt. Local dev keeps the manual boot gate and
-// gesture-first default.
+// The page always opens in keyboard mode: no camera prompt on arrival, and the
+// WASD/IJKL mapping is ready immediately. Gestures remain opt-in via the toggle.
 export const DEPLOY = Object.freeze({
   autoStart: assets.autoStart === true,
-  defaultMode: assets.defaultMode === "keyboard" ? "keyboard" : "gestures",
+  defaultMode: "keyboard",
+  // EJS caches the ROM in IndexedDB below this size (bytes). Set 0 in
+  // deploy-config.js to skip the ~600 MB copy on low-memory devices.
+  cacheLimit: Number.isFinite(assets.cacheLimit) ? assets.cacheLimit : 1073741824,
 });
 
 // pcsx_rearmed is the only supported core. mednafen_psx_hw is broken in the
@@ -62,46 +64,19 @@ export const TRACKING = Object.freeze({
 });
 
 export const STORAGE_KEYS = Object.freeze({
-  mode: "tony-hands:control-mode",
   core: "tony-hands:core",
-  controls: "tony-hands:control-preset",
+  remap: "tony-hands:key-remap",
   introSeen: "tony-hands:gesture-intro-seen",
 });
 
-// Matches RetroArch's stock keyboard layout, which is what the desktop bridge
-// presses (see src/bridge/key_mapper.py). Indices are EmulatorJS RetroPad
-// indices; `value2` is kept from EmulatorJS's own defaults so only the key
-// changes. `shift` cannot distinguish left from right in EmulatorJS.
+// The single keyboard mapping: WASD steers; I/J/K/L are grind/flip/ollie/grab;
+// O taps R2. Shoulders stay on Q/L1, E/R1, Tab/L2. This is the default on boot.
 //
-// Players 1-3 must be present and empty: the stable EmulatorJS build replaces
-// its whole controller table with this object (players 1-3 included) instead of
-// merging, so omitting them leaves `controls[1]` undefined and setupKeys()
-// throws during startup.
-export const DESKTOP_CONTROLS = Object.freeze({
-  0: {
-    0: { value: "z", value2: "BUTTON_2" }, // Cross
-    1: { value: "a", value2: "BUTTON_4" }, // Square
-    2: { value: "shift", value2: "SELECT" },
-    3: { value: "enter", value2: "START" },
-    4: { value: "up arrow", value2: "DPAD_UP" },
-    5: { value: "down arrow", value2: "DPAD_DOWN" },
-    6: { value: "left arrow", value2: "DPAD_LEFT" },
-    7: { value: "right arrow", value2: "DPAD_RIGHT" },
-    8: { value: "x", value2: "BUTTON_1" }, // Circle
-    9: { value: "s", value2: "BUTTON_3" }, // Triangle
-    10: { value: "q", value2: "LEFT_TOP_SHOULDER" },
-    11: { value: "w", value2: "RIGHT_TOP_SHOULDER" },
-    12: { value: "tab", value2: "LEFT_BOTTOM_SHOULDER" },
-    13: { value: "e", value2: "RIGHT_BOTTOM_SHOULDER" },
-  },
-  1: {},
-  2: {},
-  3: {},
-});
-
-// Skate preset: WASD steers; I/J/K/L are grind/flip/ollie/grab; O taps R2.
-// Shoulders follow the preset shown earlier: Q=L1, E=R1, Tab=L2.
-export const SKATE_CONTROLS = Object.freeze({
+// Indices are EmulatorJS RetroPad indices; `value2` is kept from EmulatorJS's
+// own defaults so only the key changes. Players 1-3 must be present and empty:
+// the stable EmulatorJS build replaces its whole controller table instead of
+// merging, so omitting them leaves controls[1] undefined and setupKeys() throws.
+export const KEYBOARD_CONTROLS = Object.freeze({
   0: {
     0: { value: "k", value2: "BUTTON_2" }, // Cross — ollie
     1: { value: "j", value2: "BUTTON_4" }, // Square — flip
@@ -123,21 +98,6 @@ export const SKATE_CONTROLS = Object.freeze({
   3: {},
 });
 
-export const CONTROL_PRESETS = Object.freeze({
-  desktop: Object.freeze({
-    label: "Desktop",
-    note: "Z, X, S, A + arrows. The original RetroArch layout.",
-    controls: DESKTOP_CONTROLS,
-  }),
-  skate: Object.freeze({
-    label: "Skate — WASD",
-    note: "WASD to steer; I grind, J flip, K ollie, L grab, O for R2.",
-    controls: SKATE_CONTROLS,
-  }),
-});
-
-export const DEFAULT_PRESET = "desktop";
-
 // Convert an EmulatorJS key name into a KeyboardEvent.code for the chip readout.
 export function keyNameToCode(value) {
   if (!value) return null;
@@ -150,4 +110,110 @@ export function keyNameToCode(value) {
   if (value === "shift") return "ShiftLeft";
   if (/^[a-z]$/.test(value)) return `Key${value.toUpperCase()}`;
   return null;
+}
+
+// Reverse conversions for the remap dialog and live EJS mutation. EJS stores
+// numeric keyCodes in controls[i][j].value; keyMap maps names -> codes.
+const NAMED_CODES = {
+  ArrowUp: "up arrow",
+  ArrowDown: "down arrow",
+  ArrowLeft: "left arrow",
+  ArrowRight: "right arrow",
+  Enter: "enter",
+  Tab: "tab",
+  ShiftLeft: "shift",
+  ShiftRight: "shift",
+  Space: "space",
+};
+
+export function codeToKeyName(code) {
+  if (!code) return null;
+  if (NAMED_CODES[code]) return NAMED_CODES[code];
+  const letter = code.match(/^Key([A-Z])$/);
+  if (letter) return letter[1].toLowerCase();
+  const digit = code.match(/^Digit([0-9])$/);
+  if (digit) return digit[1];
+  return null;
+}
+
+export function codeToKeyCode(code) {
+  if (!code) return -1;
+  if (NAMED_CODES[code] === "up arrow") return 38;
+  if (NAMED_CODES[code] === "down arrow") return 40;
+  if (NAMED_CODES[code] === "left arrow") return 37;
+  if (NAMED_CODES[code] === "right arrow") return 39;
+  if (NAMED_CODES[code] === "enter") return 13;
+  if (NAMED_CODES[code] === "tab") return 9;
+  if (NAMED_CODES[code] === "shift") return 16;
+  if (NAMED_CODES[code] === "space") return 32;
+  const letter = code.match(/^Key([A-Z])$/);
+  if (letter) return letter[1].toUpperCase().charCodeAt(0);
+  const digit = code.match(/^Digit([0-9])$/);
+  if (digit) return digit[1].charCodeAt(0);
+  return -1;
+}
+
+// Deep clone the base mapping and apply { action: "Code" } overrides by index.
+export function buildControls(remap = {}) {
+  const controls = structuredClone(KEYBOARD_CONTROLS);
+  for (const [action, code] of Object.entries(remap)) {
+    const index = ACTION_INDEX[action];
+    const name = codeToKeyName(code);
+    if (index === undefined || !name) continue;
+    controls[0][index].value = name;
+  }
+  return controls;
+}
+
+// Action -> RetroPad index (kept here so config.js has no browser imports).
+const ACTION_INDEX = Object.freeze({
+  cross: 0,
+  square: 1,
+  select: 2,
+  start: 3,
+  dpad_up: 4,
+  dpad_down: 5,
+  dpad_left: 6,
+  dpad_right: 7,
+  circle: 8,
+  triangle: 9,
+  l1: 10,
+  r1: 11,
+  l2: 12,
+  r2: 13,
+});
+
+export function isReserved(code) {
+  return (
+    code === "Tab" ||
+    code === "F5" ||
+    code === "F11" ||
+    code === "Escape" ||
+    code === "Backspace"
+  );
+}
+
+export function conflictWith(remap, action, code) {
+  const others = { ...remap };
+  delete others[action];
+  const baseCode = keyNameToCode(KEYBOARD_CONTROLS[0][ACTION_INDEX[action]]?.value);
+  return (
+    Object.values(others).includes(code) ||
+    (baseCode !== code &&
+      Object.entries(ACTION_INDEX).some(
+        ([other, index]) =>
+          other !== action && keyNameToCode(KEYBOARD_CONTROLS[0][index]?.value) === code && !others[other],
+      ))
+  );
+}
+
+export function sanitizeRemap(value) {
+  if (!value || typeof value !== "object") return {};
+  const out = {};
+  for (const [action, code] of Object.entries(value)) {
+    if (!(action in ACTION_INDEX) || typeof code !== "string") continue;
+    if (!codeToKeyName(code) || isReserved(code)) continue;
+    out[action] = code;
+  }
+  return out;
 }

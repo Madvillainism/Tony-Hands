@@ -5,7 +5,7 @@
 // `web/games/`, which is git-ignored, so this page only ever plays files the
 // person running it already owns.
 
-import { CORES, DEFAULT_CORE, DEPLOY, DESKTOP_CONTROLS, GAME } from "./config.js";
+import { CORES, DEFAULT_CORE, DEPLOY, GAME, KEYBOARD_CONTROLS } from "./config.js";
 
 const DATA_PATH = "https://cdn.emulatorjs.org/stable/data/";
 const LOADER_URL = `${DATA_PATH}loader.js`;
@@ -62,7 +62,7 @@ let bootPromise = null;
  * @param {() => void} [options.onExit]
  * @returns {Promise<object>} the EJS_emulator instance
  */
-export function bootEmulator({ player, controls = DESKTOP_CONTROLS, onGameStart, onExit }) {
+export function bootEmulator({ player, controls = KEYBOARD_CONTROLS, onGameStart, onExit }) {
   if (bootPromise) return bootPromise;
 
   bootPromise = new Promise((resolve, reject) => {
@@ -85,9 +85,10 @@ export function bootEmulator({ player, controls = DESKTOP_CONTROLS, onGameStart,
     window.EJS_alignStartButton = "center";
     window.EJS_color = "#ff5a1f";
     window.EJS_backgroundColor = "#0b0b0d";
-    // A disc image is ~600 MB. Caching it would quietly duplicate that in
-    // IndexedDB; reading it from localhost again is cheaper than the copy.
-    window.EJS_cacheConfig = { enabled: false };
+    // CacheLimit (not cacheConfig) is the real EJS key. Keep caching on so
+    // repeat visits boot fast; a deploy override can set 0 to avoid the
+    // ~600 MB IndexedDB copy on memory-constrained devices.
+    window.EJS_CacheLimit = DEPLOY.cacheLimit;
     window.EJS_onExit = () => onExit?.();
     window.EJS_onGameStart = () => {
       const emulator = getEmulator();

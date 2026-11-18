@@ -2,19 +2,24 @@
 // The emulator owns gameplay; this module owns the handoff.
 
 import {
-  CONTROL_PRESETS,
-  DEFAULT_PRESET,
+  buildControls,
+  codeToKeyCode,
   DEPLOY,
+  KEYBOARD_CONTROLS,
   STORAGE_KEYS,
   TRACKING,
   ZONES,
+  conflictWith,
+  isReserved,
   keyNameToCode,
+  sanitizeRemap,
 } from "./config.js";
 import { GestureEngine } from "./gesture-engine.js";
 import { ACTION_LABELS, PAD, PadBridge } from "./bridge.js";
 import {
   bootEmulator,
   checkGameFiles,
+  getEmulator,
   getGameManager,
 } from "./emulator.js";
 import { drawOverlay } from "./overlay.js";
@@ -30,23 +35,21 @@ const els = {
   statusText: document.getElementById("status-text"),
   lamp: document.querySelector("[data-lamp]"),
   modeHint: document.getElementById("mode-hint"),
-  cameraHint: document.getElementById("camera-hint"),
   preview: document.getElementById("preview"),
   previewOff: document.getElementById("preview-off"),
   chips: [...document.querySelectorAll(".chip[data-action]")],
   modeRadios: [...document.querySelectorAll('input[name="control-mode"]')],
-  presetRadios: [...document.querySelectorAll('input[name="control-preset"]')],
-  reload: document.getElementById("reload"),
-  presetHint: document.getElementById("preset-hint"),
   announcer: document.getElementById("announcer"),
   video: document.getElementById("camera"),
+  remap: document.getElementById("remap"),
 };
 
 const previewCtx = els.preview.getContext("2d");
 
 // Keyboard chips are read-only decoration; the emulator handles the real keys.
-// Derived from the active preset so the readout always matches the mapping.
-let keyToAction = deriveKeyMap(CONTROL_PRESETS[DEFAULT_PRESET].controls);
+// Derived from the key map so the readout always matches the active binding.
+let remap = loadRemap();
+let keyToAction = deriveKeyMap(buildControls(remap));
 
 function deriveKeyMap(controls) {
   const map = {};
@@ -57,9 +60,26 @@ function deriveKeyMap(controls) {
   return map;
 }
 
+function loadRemap() {
+  try {
+    return sanitizeRemap(
+      JSON.parse(localStorage.getItem(STORAGE_KEYS.remap) ?? "{}"),
+    );
+  } catch {
+    return {};
+  }
+}
+
+function persistRemap() {
+  try {
+    localStorage.setItem(STORAGE_KEYS.remap, JSON.stringify(remap));
+  } catch {
+    // Restricted storage: the choice lasts for this session only.
+  }
+}
+
 const state = {
-  mode: "gestures",
-  preset: DEFAULT_PRESET,
+  mode: "keyboard",
   filesReady: false,
   booted: false,
   engine: null,
@@ -111,8 +131,6 @@ function startEngine() {
       video: els.video,
       tracking: TRACKING.play,
       zones: ZONES,
-      // One preview redraw per inference (20 fps during play) instead of a
-      // second rAF loop fighting the emulator for the frame budget.
       onHands: drawPreview,
       onInput: handleInput,
       onStatus: handleEngineStatus,
@@ -165,7 +183,6 @@ function drawPreview() {
 // ------------------------------------------------------------------- input
 
 function handleInput(event) {
-  // Guard against a press arriving in the same tick as a mode switch.
   if (state.mode !== "gestures") return;
   state.bridge.apply(event);
   renderChips();
@@ -182,65 +199,18 @@ function releaseEverything(message) {
 
 // -------------------------------------------------------------------- mode
 
-function readMode() {
-  let stored = null;
-  try {
-    stored = localStorage.getItem(STORAGE_KEYS.mode);
-  } catch {
-    // Restricted storage: fall back to the deploy default.
-  }
-  if (stored === "keyboard" || stored === "gestures") return stored;
-  // No saved choice yet: keyboard-first on the deployed site so the camera
-  // permission prompt does not fire on arrival; gestures locally.
-  return DEPLOY.defaultMode;
-}
-
-function readPreset() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEYS.controls);
-    if (stored && CONTROL_PRESETS[stored]) return stored;
-  } catch {
-    // Restricted storage: fall back to the default preset.
-  }
-  return DEFAULT_PRESET;
-}
-
-function applyPreset(id) {
-  state.preset = id;
-  keyToAction = deriveKeyMap(CONTROL_PRESETS[id].controls);
-  for (const radio of els.presetRadios) radio.checked = radio.value === id;
-  try {
-    localStorage.setItem(STORAGE_KEYS.controls, id);
-  } catch {
-    // Restricted storage: the choice lasts for this session only.
-  }
-  if (els.presetHint) els.presetHint.textContent = CONTROL_PRESETS[id].note;
-  // EJS snapshots controls when it boots; changing them later needs a reload.
-  if (els.reload) els.reload.hidden = !state.booted;
-  if (state.mode === "keyboard") {
-    setModeHint(
-      id === "skate"
-        ? "Keyboard — Skate: WASD to steer, I/J/K/L for tricks, O for R2."
-        : "Keyboard — Desktop: Z, X, S, A, arrows, Enter. Matches the desktop app.",
-    );
-  }
-}
-
 function applyMode(mode, { activateCamera = false } = {}) {
   state.mode = mode;
-  localStorage.setItem(STORAGE_KEYS.mode, mode);
   for (const radio of els.modeRadios) radio.checked = radio.value === mode;
 
   if (mode === "keyboard") {
     stopEngine();
     releaseEverything();
     els.previewOff.hidden = false;
-    setModeHint(
-      state.preset === "skate"
-        ? "Keyboard — Skate: WASD to steer, I/J/K/L for tricks, O for R2."
-        : "Keyboard — Desktop: Z, X, S, A, arrows, Enter. Matches the desktop app.",
-    );
+    setModeHint("Keyboard — WASD to steer, I/J/K/L for tricks, O for R2.");
     document.body.dataset.mode = "keyboard";
+    // EJS binds keys to #game; after clicking UI, put focus back so keys work.
+    if (state.booted) document.querySelector("#game")?.focus();
   } else {
     setModeHint("Gesture mode. Left hand steers, right hand tricks.");
     document.body.dataset.mode = "gestures";
@@ -275,11 +245,37 @@ async function refreshFiles() {
     setStatus("error", "Game unavailable");
   }
 
-  // The deployed build boots on arrival; local dev waits for a button press.
   if (result.ready && DEPLOY.autoStart && !state.booted) bootGame();
 }
 
 // ---------------------------------------------------------------- emulator
+
+// EJS snapshots EJS_defaultControls at construction and converts names to
+// numeric keyCodes. At game start it may override controls from localStorage.
+// Mutate the live table after that load so a remap wins without a ROM reload.
+function applyRemapLive() {
+  const emulator = getEmulator();
+  if (!emulator?.controls || typeof emulator.saveSettings !== "function") return;
+  let changed = false;
+  for (const [action, code] of Object.entries(remap)) {
+    const index = PAD[action];
+    const numeric = codeToKeyCode(code);
+    if (index === undefined || numeric < 0) continue;
+    const slot = emulator.controls[0]?.[index];
+    if (slot && slot.value !== numeric) {
+      slot.value = numeric;
+      changed = true;
+    }
+  }
+  if (changed) {
+    try {
+      emulator.saveSettings();
+    } catch {
+      // EJS may reject a save before settings are fully loaded; live input
+      // still works because controls[0] was mutated.
+    }
+  }
+}
 
 function bootGame() {
   if (!state.filesReady || state.booted) return;
@@ -291,12 +287,13 @@ function bootGame() {
 
   bootEmulator({
     player: "#game",
-    controls: CONTROL_PRESETS[state.preset].controls,
+    controls: buildControls(remap),
     onGameStart: () => {
+      applyRemapLive();
       setStatus("live", "Game running");
-      // The camera starts once the game is actually running, so the
-      // permission prompt never covers the boot screen.
       if (state.mode === "gestures" && !state.engine?.running) startEngine();
+      // Make sure keys reach EJS immediately after the auto-boot.
+      if (state.mode === "keyboard") document.querySelector("#game")?.focus();
     },
     onExit: () => {
       releaseEverything();
@@ -341,11 +338,70 @@ function showGestureIntro() {
       } catch {
         // Restricted storage: closing is still enough for this session.
       }
-      dialog.returnValue = ""; // Esc and other dismissals set no value.
+      dialog.returnValue = "";
     },
     { once: true },
   );
   dialog.showModal();
+}
+
+// ------------------------------------------------------------------- remap
+
+function renderRemapRows() {
+  for (const button of document.querySelectorAll("#remap [data-capture]")) {
+    const action = button.dataset.capture;
+    const code = remap[action] ?? keyNameToCode(KEYBOARD_CONTROLS[0][PAD[action]]?.value);
+    button.textContent = prettyKey(code);
+  }
+}
+
+function prettyKey(code) {
+  if (!code) return "—";
+  return code
+    .replace(/^Key/, "")
+    .replace(/^Digit/, "")
+    .replace("Arrow", "")
+    .replace("Left", " L")
+    .replace("Right", " R")
+    .trim();
+}
+
+function captureKey(action, button) {
+  button.dataset.capturing = "true";
+  button.textContent = "…";
+  announce(`Press a key for ${ACTION_LABELS[action] ?? action}, or Escape to cancel`);
+
+  const onKey = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.key === "Escape") return end();
+    if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (isReserved(event.code)) {
+      announce("That key is reserved");
+      return;
+    }
+    if (conflictWith(remap, action, event.code)) {
+      announce("Already used for another action");
+      return;
+    }
+
+    remap[action] = event.code;
+    persistRemap();
+    keyToAction = deriveKeyMap(buildControls(remap));
+    applyRemapLive();
+    renderRemapRows();
+    announce(`${ACTION_LABELS[action] ?? action} is now ${prettyKey(event.code)}`);
+    end();
+  };
+
+  function end() {
+    button.removeAttribute("data-capturing");
+    document.removeEventListener("keydown", onKey, true);
+    renderRemapRows();
+    button.focus();
+  }
+
+  document.addEventListener("keydown", onKey, true);
 }
 
 // ------------------------------------------------------------------ wiring
@@ -353,19 +409,10 @@ function showGestureIntro() {
 for (const radio of els.modeRadios) {
   radio.addEventListener("change", () => {
     if (!radio.checked) return;
-    // First time choosing Gestures: show the short animated introduction.
     if (radio.value === "gestures") showGestureIntro();
     applyMode(radio.value, { activateCamera: true });
   });
 }
-
-for (const radio of els.presetRadios) {
-  radio.addEventListener("change", () => {
-    if (radio.checked) applyPreset(radio.value);
-  });
-}
-
-els.reload?.addEventListener("click", () => location.reload());
 
 els.boot.addEventListener("click", bootGame);
 els.release.addEventListener("click", () => {
@@ -389,6 +436,18 @@ document.addEventListener("keyup", (event) => {
   renderChips();
 });
 
+if (els.remap) {
+  for (const button of els.remap.querySelectorAll("[data-capture]")) {
+    button.addEventListener("click", () =>
+      captureKey(button.dataset.capture, button),
+    );
+  }
+  els.remap.addEventListener("close", () => {
+    els.remap.returnValue = "";
+  });
+  renderRemapRows();
+}
+
 wireDialogs();
 
 document.addEventListener("visibilitychange", () => {
@@ -402,7 +461,6 @@ window.addEventListener("pagehide", () => {
 
 // ------------------------------------------------------------------- start
 
-applyMode(readMode());
-applyPreset(readPreset());
+applyMode("keyboard");
 drawPreview();
 refreshFiles();

@@ -147,10 +147,6 @@
                 Camera off. Switch to gestures to turn it on.
               </p>
             </div>
-            <p class="card__hint" id="camera-hint">
-              Runs at 320×240 while a game is on screen, to leave the emulator
-              the CPU.
-            </p>
           </section>
 
           <section class="card">
@@ -167,25 +163,16 @@
               </label>
             </fieldset>
             <h3 class="card__sub">Keyboard layout</h3>
-            <fieldset class="segmented">
-              <legend class="visually-hidden">Keyboard preset</legend>
-              <label class="segmented__opt">
-                <input type="radio" name="control-preset" value="desktop" />
-                <span>Desktop<small>classic</small></span>
-              </label>
-              <label class="segmented__opt">
-                <input type="radio" name="control-preset" value="skate" />
-                <span>Skate<small>WASD · IJKL</small></span>
-              </label>
-            </fieldset>
-            <p class="card__hint" id="preset-hint">Classic RetroArch keys.</p>
+            <p class="card__hint">
+              WASD to steer · I/J/K/L for tricks · O for R2.
+            </p>
             <p class="card__hint" id="mode-hint" aria-live="polite">
               Pick how you want to ride.
             </p>
-            <button class="btn btn--ghost" id="reload" type="button" hidden>
-              Reload to apply keys
-            </button>
             <div class="card__row">
+              <button class="btn btn--ghost" type="button" data-open-dialog="remap" aria-haspopup="dialog">
+                Remap keys
+              </button>
               <a class="btn btn--ghost" href="./demo.html">Test gestures</a>
               <button class="btn btn--ghost" id="release" type="button">
                 Release
@@ -315,14 +302,14 @@
           <section>
             <h3 class="sheet__sub">Keyboard, same as the desktop app</h3>
             <ul class="keys">
-              <li><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd><span>D-Pad</span></li>
-              <li><kbd>Z</kbd><span>Cross</span></li>
-              <li><kbd>X</kbd><span>Circle</span></li>
-              <li><kbd>S</kbd><span>Triangle</span></li>
-              <li><kbd>A</kbd><span>Square</span></li>
+              <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>D-Pad</span></li>
+              <li><kbd>K</kbd><span>Cross · ollie</span></li>
+              <li><kbd>L</kbd><span>Circle · grab</span></li>
+              <li><kbd>I</kbd><span>Triangle · grind</span></li>
+              <li><kbd>J</kbd><span>Square · flip</span></li>
               <li><kbd>Q</kbd><span>L1</span></li>
-              <li><kbd>W</kbd><span>R1</span></li>
-              <li><kbd>E</kbd><span>R2</span></li>
+              <li><kbd>E</kbd><span>R1</span></li>
+              <li><kbd>O</kbd><span>R2</span></li>
               <li><kbd>Enter</kbd><span>Start</span></li>
               <li><kbd>Shift</kbd><span>Select</span></li>
             </ul>
@@ -384,6 +371,42 @@
         </div>
         <form method="dialog" class="intro__close">
           <button class="btn btn--primary" type="submit" autofocus>Got it — start riding</button>
+        </form>
+      </div>
+    </dialog>
+
+    <dialog class="sheet" id="remap" aria-labelledby="remap-title" closedby="any">
+      <div class="sheet__inner">
+        <header class="sheet__head">
+          <h2 class="sheet__title" id="remap-title">Remap keys</h2>
+          <form method="dialog">
+            <button class="sheet__close" type="submit" aria-label="Close the key remapper">×</button>
+          </form>
+        </header>
+        <div class="sheet__body">
+          <p class="sheet__text">
+            Click a key, then press a new one. Escape cancels. Changes apply
+            immediately and are saved for next time.
+          </p>
+          <ul class="remap__grid">
+            <li><button type="button" data-capture="dpad_up">Up</button></li>
+            <li><button type="button" data-capture="dpad_down">Down</button></li>
+            <li><button type="button" data-capture="dpad_left">Left</button></li>
+            <li><button type="button" data-capture="dpad_right">Right</button></li>
+            <li><button type="button" data-capture="cross">Cross · ollie</button></li>
+            <li><button type="button" data-capture="circle">Circle · grab</button></li>
+            <li><button type="button" data-capture="triangle">Triangle · grind</button></li>
+            <li><button type="button" data-capture="square">Square · flip</button></li>
+            <li><button type="button" data-capture="l1">L1</button></li>
+            <li><button type="button" data-capture="r1">R1</button></li>
+            <li><button type="button" data-capture="l2">L2</button></li>
+            <li><button type="button" data-capture="r2">R2</button></li>
+            <li><button type="button" data-capture="start">Start</button></li>
+            <li><button type="button" data-capture="select">Select</button></li>
+          </ul>
+        </div>
+        <form method="dialog" class="intro__close">
+          <button class="btn btn--primary" type="submit">Done</button>
         </form>
       </div>
     </dialog>
