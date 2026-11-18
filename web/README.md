@@ -98,6 +98,14 @@ visible — that is Cross (X) and confirms. The peace sign is Triangle and backs
 out; thumbs-down opens the game's pause menu. The same walkthrough is in the animated hands intro
 shown when you select Hands and in the Trick sheet.
 
+### Audio
+
+The **Sound on / Sound off** button in the cabinet status bar is the only game
+audio control. It is saved for next time and sets EmulatorJS's volume at boot,
+hiding EJS's own mute/volume UI so the two cannot disagree. Muting zeroes the
+audio output; it does not stop the core generating sound, so the main benefit is
+cleaner audio on devices with buggy output rather than a large CPU saving.
+
 ### Keyboard
 
 The default Skate layout (remap any key with the **Remap keys** dialog). Open the
@@ -133,9 +141,9 @@ page; rotating back to portrait re-enables the full view.
 
 ### Fast menu boot
 
-The deployed build loads `state/thps.state` on start through EmulatorJS's
-`EJS_loadStateURL`, so THPS opens at the main menu instead of playing the
-Activision/Neversoft videos. The state file is git-ignored;
+The deployed build loads `state/<game-id>.state` on start through EmulatorJS's
+`EJS_loadStateURL`, so THPS 1 and THPS 2 open at their main menus instead of
+playing the Activision/Neversoft videos. State files are git-ignored;
 `scripts/upload-assets.ps1` uploads it to R2 and `scripts/prepare-deploy.mjs`
 adds its URL to `deploy-config.js` only when the file exists. Local development
 has no state file and boots normally. Savestates are core-version-specific — if

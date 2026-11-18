@@ -58,9 +58,13 @@ $assets = @(
   @{ Local = "..\web\games\thps2\thps2.chd"; Key = "thps2.chd" },
   @{ Local = "..\web\games\scph5501.bin";    Key = "scph5501.bin" }
 )
-# Optional main-menu savestate, used by deploy-config.js when present.
-if (Test-Path (Join-Path $PSScriptRoot "..\state\thps.state")) {
-  $assets += @{ Local = "..\state\thps.state"; Key = "thps.state" }
+# Optional main-menu savestates, named after the game id. deploy-config.js
+# only references states that are actually present here.
+$stateDir = Join-Path $PSScriptRoot "..\state"
+if (Test-Path $stateDir) {
+  foreach ($file in Get-ChildItem -Path $stateDir -Filter "*.state" -File) {
+    $assets += @{ Local = "..\state\$($file.Name)"; Key = $file.Name }
+  }
 }
 if ($IncludeBin) {
   $assets += @{ Local = "..\web\games\thps.bin"; Key = "thps.bin" }

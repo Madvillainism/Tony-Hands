@@ -5,7 +5,7 @@
 // `web/games/`, which is git-ignored, so this page only ever plays files the
 // person running it already owns.
 
-import { CORES, DEFAULT_CORE, DEPLOY, GAME, KEYBOARD_CONTROLS } from "./config.js";
+import { AUDIO, CORES, DEFAULT_CORE, DEPLOY, GAME, KEYBOARD_CONTROLS } from "./config.js";
 
 const DATA_PATH = "https://cdn.emulatorjs.org/stable/data/";
 const LOADER_URL = `${DATA_PATH}loader.js`;
@@ -61,11 +61,12 @@ let bootPromise = null;
  * @param {string} options.player Selector for the container element.
  * @param {string} [options.coreId] Kept for API compatibility; pcsx_rearmed is the only core.
  * @param {object} [options.controls] RetroPad table; EJS snapshots it at construction.
+ * @param {boolean} [options.muted] Start with game audio muted.
  * @param {(emulator: object) => void} [options.onGameStart]
  * @param {() => void} [options.onExit]
  * @returns {Promise<object>} the EJS_emulator instance
  */
-export function bootEmulator({ player, game = GAME, controls = KEYBOARD_CONTROLS, onGameStart, onExit }) {
+export function bootEmulator({ player, game = GAME, controls = KEYBOARD_CONTROLS, muted = false, onGameStart, onExit }) {
   if (bootPromise) return bootPromise;
 
   bootPromise = new Promise((resolve, reject) => {
@@ -75,15 +76,19 @@ export function bootEmulator({ player, game = GAME, controls = KEYBOARD_CONTROLS
     window.EJS_biosUrl = game.bios ?? GAME.bios;
     window.EJS_gameName = game.label ?? GAME.name;
     // Optional savestate: EJS fetches it and loads it just after the game
-    // starts. Deploy builds point this at a main-menu state to skip FMVs.
-    window.EJS_loadStateURL = game.stateUrl ?? "";
+    // starts. Leave the variable undefined when there is no state — an empty
+    // string is still a string to EJS and makes it fetch this page as a state.
+    if (game.stateUrl) window.EJS_loadStateURL = game.stateUrl;
+    else delete window.EJS_loadStateURL;
     window.EJS_pathtodata = DATA_PATH;
     window.EJS_startOnLoaded = DEPLOY.autoStart;
     // Threads need COOP/COEP headers, which a plain static server does not
     // send. Staying single-threaded keeps `python -m http.server` working.
     window.EJS_threads = false;
     window.EJS_defaultControls = controls;
-    window.EJS_volume = 0.6;
+    // The page owns audio; EJS's own mute/volume UI would fight our switch.
+    window.EJS_volume = muted ? 0 : AUDIO.volume;
+    window.EJS_Buttons = { mute: false, volume: false };
     // Pin the language. EmulatorJS asks for the bare code from the browser
     // ("es"), but the CDN only publishes region variants ("es-ES"), so the
     // 404 aborts startup before EJS_emulator exists.
@@ -106,6 +111,9 @@ export function bootEmulator({ player, game = GAME, controls = KEYBOARD_CONTROLS
       const emulator = getEmulator();
       // Never let EJS's built-in gamepad appear over our touch controls.
       emulator?.toggleVirtualGamepad?.(false);
+      // EJS restores its own saved mute/volume just before "start"; re-apply
+      // the page preference so that saved state cannot override our switch.
+      emulator?.setVolume?.(muted ? 0 : AUDIO.volume);
       onGameStart?.(emulator);
       resolve(emulator);
     };

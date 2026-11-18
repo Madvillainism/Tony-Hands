@@ -320,6 +320,38 @@ main,
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.55);
 }
 
+.audio-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-inline-size: 5rem;
+  min-block-size: 28px;
+  padding: 0.25rem 0.55rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--bone);
+  border: var(--line) solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  cursor: pointer;
+}
+
+.audio-toggle[aria-pressed="false"] {
+  color: var(--bone-dim);
+  background: var(--asphalt-3);
+  border-color: rgba(246, 241, 227, 0.4);
+  box-shadow: none;
+}
+
+.audio-toggle:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
 [data-lamp][data-tone="live"] {
   background: var(--green);
 }

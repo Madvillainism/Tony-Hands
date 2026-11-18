@@ -2,6 +2,7 @@
 // The emulator owns gameplay; this module owns the handoff.
 
 import {
+  AUDIO,
   buildControls,
   codeToKeyCode,
   DEPLOY,
@@ -49,6 +50,8 @@ const els = {
   touchPad: document.getElementById("touch-pad"),
   keyGuideCells: [...document.querySelectorAll("#key-guide [data-key-for]")],
   landscapeExit: document.getElementById("landscape-exit"),
+  audioToggle: document.getElementById("audio-toggle"),
+  audioToggleLabel: document.getElementById("audio-toggle-label"),
 };
 
 const touch = isTouchDevice();
@@ -108,6 +111,14 @@ function persistRemap() {
   }
 }
 
+function loadAudioMuted() {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.audioMuted) === "1";
+  } catch {
+    return AUDIO.defaultMuted;
+  }
+}
+
 const state = {
   mode: "keyboard",
   filesReady: false,
@@ -116,6 +127,7 @@ const state = {
   bridge: new PadBridge(getGameManager),
   keyboardHeld: new Set(),
   introPending: false,
+  audioMuted: loadAudioMuted(),
 };
 
 // On-screen pad for touch devices; a no-op object on pointer devices.
@@ -160,6 +172,24 @@ function focusGame() {
   if (touch || state.mode !== "keyboard") return;
   const target = document.fullscreenElement ?? document.querySelector("#game");
   target?.focus?.({ preventScroll: true });
+}
+
+function renderAudioToggle() {
+  if (!els.audioToggle) return;
+  els.audioToggle.setAttribute("aria-pressed", String(!state.audioMuted));
+  els.audioToggleLabel.textContent = state.audioMuted ? "Sound off" : "Sound on";
+}
+
+function setAudioMuted(muted) {
+  state.audioMuted = muted;
+  try {
+    localStorage.setItem(STORAGE_KEYS.audioMuted, muted ? "1" : "0");
+  } catch {
+    // Restricted storage: the choice lasts for this session only.
+  }
+  renderAudioToggle();
+  getEmulator()?.setVolume?.(muted ? 0 : AUDIO.volume);
+  announce(muted ? "Game audio off" : "Game audio on");
 }
 
 function renderChips() {
@@ -373,6 +403,7 @@ function bootGame(game = selectedGame) {
     player: "#game",
     game,
     controls: buildControls(remap),
+    muted: state.audioMuted,
     onGameStart: () => {
       applyRemapLive();
       setStatus("live", "Game running");
@@ -575,6 +606,8 @@ if (els.remap) {
   renderRemapRows();
 }
 renderKeyGuide();
+renderAudioToggle();
+els.audioToggle?.addEventListener("click", () => setAudioMuted(!state.audioMuted));
 
 wireDialogs();
 
