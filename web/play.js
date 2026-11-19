@@ -14,6 +14,7 @@ import {
   conflictWith,
   isReserved,
   keyNameToCode,
+  sanitizeEjsSettings,
   sanitizeRemap,
 } from "./config.js";
 import { GestureEngine } from "./gesture-engine.js";
@@ -53,6 +54,17 @@ const els = {
 
 const touch = isTouchDevice();
 const selectedGame = resolveGame();
+
+// One-time repair from the reverted audio toggle. EJS reads this key on every
+// boot; the inconsistent pair would otherwise leave affected browsers silent.
+try {
+  const rawEjsSettings = localStorage.getItem("ejs-settings");
+  if (rawEjsSettings && sanitizeEjsSettings(rawEjsSettings) === null) {
+    localStorage.removeItem("ejs-settings");
+  }
+} catch {
+  // Restricted storage: nothing to repair.
+}
 
 const previewCtx = els.preview.getContext("2d");
 
@@ -382,6 +394,7 @@ function bootGame(game = selectedGame) {
       focusGame();
     },
     onExit: () => {
+      stopEngine();
       releaseEverything();
       setStatus("idle", "Emulator stopped");
       state.booted = false;
@@ -417,7 +430,11 @@ function showGestureIntro() {
     "close",
     () => {
       state.introPending = false;
-      if (state.mode === "gestures") startEngine();
+      // Do not ask for the camera until there is a running game to control;
+      // onGameStart() starts it if the tutorial was dismissed during boot.
+      if (state.mode === "gestures" && document.body.dataset.status === "live") {
+        startEngine();
+      }
     },
     { once: true },
   );
@@ -506,7 +523,7 @@ for (const radio of els.modeRadios) {
     if (radio.value === "gestures") {
       const tutorial = showGestureIntro();
       applyMode(radio.value, { activateCamera: false });
-      if (!tutorial) startEngine();
+      if (!tutorial && document.body.dataset.status === "live") startEngine();
     } else {
       applyMode(radio.value, { activateCamera: true });
     }

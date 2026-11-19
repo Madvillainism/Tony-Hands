@@ -64,7 +64,8 @@ files directly. On first boot EmulatorJS downloads its runtime and core from
 The page opens in **Keyboard** mode with the camera card and the cabinet's
 **Live input** chips hidden. Switch to **Hands** in the Input card to reveal both
 and start the camera; switching back hides them again. Touch devices are
-keyboard-only and show an on-screen pad instead.
+keyboard-only and show an on-screen pad instead. The four-step **How to ride** walkthrough is shown only
+in Hands mode, so keyboard players do not scroll past hand instructions.
 
 ### Hands
 

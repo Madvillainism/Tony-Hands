@@ -849,6 +849,12 @@ body[data-mode="keyboard"] #hands-card {
   padding-block-end: clamp(1.5rem, 3vw, 3rem);
 }
 
+/* The four-step hand tutorial is only relevant in Hands mode, just like the
+   camera card and the chip readout. */
+body[data-mode="keyboard"] .ride {
+  display: none;
+}
+
 .section-title {
   display: flex;
   align-items: baseline;

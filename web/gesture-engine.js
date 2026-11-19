@@ -283,6 +283,11 @@ export class GestureEngine {
     if (!this.running) return;
     this.rafId = requestAnimationFrame(this.loop);
 
+    // A background tab cannot use the input, so do not spend the main thread
+    // (or the camera) on inference. Resuming works because video.currentTime
+    // has advanced by then.
+    if (typeof document !== "undefined" && document.hidden) return;
+
     const video = this.video;
     if (!video || video.readyState < 2) return;
 

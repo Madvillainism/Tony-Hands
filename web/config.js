@@ -122,6 +122,20 @@ export const STORAGE_KEYS = Object.freeze({
   game: "tony-hands:game",
 });
 
+// The removed audio toggle wrote volume:0 with muted:false into EJS's global
+// settings. Return null only for that inconsistent pair so a genuine user mute
+// (volume:0, muted:true) is preserved. Callers pass a raw localStorage string.
+export function sanitizeEjsSettings(raw) {
+  if (!raw) return raw;
+  try {
+    const settings = JSON.parse(raw);
+    if (settings && settings.volume === 0 && settings.muted === false) return null;
+  } catch {
+    /* malformed JSON: leave it for EmulatorJS to handle */
+  }
+  return raw;
+}
+
 // The page always boots on THPS 1 unless the URL explicitly asks for another
 // game. No remembered choice: the game picker is a per-session action.
 export function resolveGame({ search } = {}) {
