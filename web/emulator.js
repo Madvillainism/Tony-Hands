@@ -92,10 +92,12 @@ export function bootEmulator({ player, game = GAME, controls = KEYBOARD_CONTROLS
     window.EJS_language = "en-US";
     // true disables auto language detection (and its localization JSON fetch).
     window.EJS_disableAutoLang = true;
-    // Touch devices use our own on-screen pad, never EJS's virtual gamepad or
-    // the soft keyboard. EJS focuses a tabindex=-1 div on start; suppress it.
+    // Touch devices use our own on-screen pad, never EJS's virtual gamepad.
+    // Let EJS refocus its parent on mousedown/touchstart inside #game so clicking
+    // back into the game restores keyboard input after a mode switch. The touch
+    // pad is a sibling of #game, so it does not trigger this focus path.
     window.EJS_VirtualGamepadSettings = [];
-    window.EJS_noAutoFocus = true;
+    window.EJS_noAutoFocus = false;
     window.EJS_alignStartButton = "center";
     window.EJS_color = "#ff5a1f";
     window.EJS_backgroundColor = "#0b0b0d";

@@ -278,9 +278,10 @@ function applyMode(mode, { activateCamera = false } = {}) {
     els.previewOff.hidden = false;
     setModeHint("Keyboard — WASD to steer; full key guide below.");
     document.body.dataset.mode = "keyboard";
-    // EJS binds keys to #game; refocus after UI clicks so keys work. On touch
-    // devices focusing #game can raise the soft keyboard — never do it there.
-    if (state.booted) focusGame();
+    // EJS binds keys to #game; refocus after UI clicks so keys work. Defer one
+    // frame so a native dialog closing or a permission prompt cannot steal it
+    // back after this handler. Touch devices never focus #game.
+    if (state.booted) requestAnimationFrame(focusGame);
   } else {
     setModeHint("Hands mode. Left hand steers, right hand tricks.");
     document.body.dataset.mode = "gestures";
