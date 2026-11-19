@@ -34,17 +34,10 @@ test("game registry holds both PS1 titles with a selector default", () => {
   assert.equal(STORAGE_KEYS.game, "tony-hands:game");
 });
 
-test("resolveGame prefers URL, then saved choice, then default", () => {
-  assert.equal(resolveGame({ search: "?game=thps2", storage: null }).id, "thps2");
-  assert.equal(
-    resolveGame({
-      search: "",
-      storage: { getItem: () => "thps2" },
-    }).id,
-    "thps2",
-  );
-  assert.equal(resolveGame({ search: "?game=nope", storage: null }).id, "thps");
-  assert.equal(resolveGame({ search: "", storage: null }).id, "thps");
+test("resolveGame uses the URL or defaults to THPS 1, never saved storage", () => {
+  assert.equal(resolveGame({ search: "?game=thps2" }).id, "thps2");
+  assert.equal(resolveGame({ search: "?game=nope" }).id, "thps");
+  assert.equal(resolveGame({ search: "" }).id, "thps");
 });
 
 test("isTouchDevice detects coarse pointers and touch points", () => {

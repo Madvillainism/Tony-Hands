@@ -53,11 +53,6 @@ const els = {
 
 const touch = isTouchDevice();
 const selectedGame = resolveGame();
-try {
-  localStorage.setItem(STORAGE_KEYS.game, selectedGame.id);
-} catch {
-  // Restricted storage: the selection lasts for this load only.
-}
 
 const previewCtx = els.preview.getContext("2d");
 
@@ -369,9 +364,15 @@ function bootGame(game = selectedGame) {
   els.boot.disabled = true;
   setStatus("busy", "Loading the emulator");
 
+  // ?nostate lets us boot at the title screen to capture a fresh savestate
+  // with this exact EmulatorJS build, without touching the deployed assets.
+  const bootGameConfig = new URLSearchParams(location.search).has("nostate")
+    ? { ...game, stateUrl: null }
+    : game;
+
   bootEmulator({
     player: "#game",
-    game,
+    game: bootGameConfig,
     controls: buildControls(remap),
     onGameStart: () => {
       applyRemapLive();
@@ -513,16 +514,11 @@ for (const radio of els.modeRadios) {
 }
 
 // Game selector: switching navigates with ?game=<id> because EJS reads the
-// ROM URL once at construction, so a fresh page is the reliable path.
+// ROM URL once at construction. The default boot is always THPS 1.
 for (const radio of els.gameRadios) {
   radio.checked = radio.value === selectedGame.id;
   radio.addEventListener("change", () => {
     if (!radio.checked || radio.value === selectedGame.id) return;
-    try {
-      localStorage.setItem(STORAGE_KEYS.game, radio.value);
-    } catch {
-      // Restricted storage: the URL still carries the choice.
-    }
     location.assign(`?game=${encodeURIComponent(radio.value)}`);
   });
 }

@@ -122,23 +122,15 @@ export const STORAGE_KEYS = Object.freeze({
   game: "tony-hands:game",
 });
 
-// URL ?game= wins over a remembered pick, then the registry default.
-// Parameters keep this pure so Node tests need no browser globals.
-export function resolveGame({ search, storage } = {}) {
+// The page always boots on THPS 1 unless the URL explicitly asks for another
+// game. No remembered choice: the game picker is a per-session action.
+export function resolveGame({ search } = {}) {
   const query = search ?? (typeof location !== "undefined" ? location.search : "");
-  const store = storage ?? (typeof localStorage !== "undefined" ? localStorage : null);
   let id = null;
   try {
     id = new URLSearchParams(query).get("game");
   } catch {
     /* invalid query string */
-  }
-  if (!id && store) {
-    try {
-      id = store.getItem(STORAGE_KEYS.game);
-    } catch {
-      /* restricted storage */
-    }
   }
   return (
     GAMES.find((game) => game.id === id) ??

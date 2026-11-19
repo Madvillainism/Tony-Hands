@@ -5,7 +5,8 @@
 Play Tony Hawk's Pro Skater **1 or 2** in the browser with **your hands or a
 keyboard**. The page runs [EmulatorJS](https://emulatorjs.org) and uses the
 same geometric gesture classifiers as the desktop app via MediaPipe Hand
-Landmarker. Use the **Select game** card to switch between the two PS1 titles.
+Landmarker. The page always opens on **THPS 1**; use the **Select game** card to
+switch to THPS 2 for that visit.
 
 - No build step, no dependencies to install.
 - Hands controls and a WASD/IJKL keyboard layout, remappable in-page.
@@ -140,7 +141,10 @@ playing the Activision/Neversoft videos. State files are git-ignored;
 adds its URL to `deploy-config.js` only when the file exists. Local development
 has no state file and boots normally. Savestates are core-version-specific — if
 an EmulatorJS/core update makes one fail, remove the file (or its `stateUrl`) to
-fall back to the normal boot.
+fall back to the normal boot. Capture replacements in the browser with
+`?nostate=1`: boot to the main menu, press EmulatorJS's **Save State** button,
+and save the download as `state/<game-id>.state`. States made in desktop
+RetroArch can restore incompatible audio state.
 
 ---
 
