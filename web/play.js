@@ -369,10 +369,18 @@ function applyRemapLive() {
 }
 
 // EJS writes save files into an IDBFS mount but leaves its syncfs(false)
-// commented out, so flush explicitly before the tab can disappear.
+// commented out, and this build ignores EJS_fixedSaveInterval. Own the flush.
+let saveFlushTimer = 0;
+
 function flushSaves() {
   const gameManager = getGameManager();
   if (!gameManager) return;
+  try {
+    const count = Number(localStorage.getItem(STORAGE_KEYS.saveFlushes) ?? 0) + 1;
+    localStorage.setItem(STORAGE_KEYS.saveFlushes, String(count));
+  } catch {
+    // Restricted storage: the counter is diagnostic only.
+  }
   try {
     gameManager.saveSaveFiles();
     gameManager.FS.syncfs(false, (error) => {
@@ -381,6 +389,17 @@ function flushSaves() {
   } catch (error) {
     console.warn("Could not flush save file.", error);
   }
+}
+
+function startSaveFlushes() {
+  if (saveFlushTimer) return;
+  saveFlushTimer = window.setInterval(flushSaves, 5000);
+}
+
+function stopSaveFlushes() {
+  if (!saveFlushTimer) return;
+  window.clearInterval(saveFlushTimer);
+  saveFlushTimer = 0;
 }
 
 function bootGame(game = selectedGame) {
@@ -405,6 +424,7 @@ function bootGame(game = selectedGame) {
     onGameStart: () => {
       applyRemapLive();
       setStatus("live", "Game running");
+      startSaveFlushes();
       // The boot savestate lands a few ms after "start" and can carry empty
       // SRAM. Re-read the persisted save file after it so progress shows up.
       setTimeout(() => {
@@ -417,6 +437,7 @@ function bootGame(game = selectedGame) {
     },
     onExit: () => {
       flushSaves();
+      stopSaveFlushes();
       stopEngine();
       releaseEverything();
       setStatus("idle", "Emulator stopped");
@@ -629,6 +650,7 @@ document.addEventListener("fullscreenchange", () => {
 
 window.addEventListener("pagehide", () => {
   flushSaves();
+  stopSaveFlushes();
   releaseEverything();
   state.engine?.stop();
 });

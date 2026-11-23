@@ -120,6 +120,7 @@ export const STORAGE_KEYS = Object.freeze({
   core: "tony-hands:core",
   remap: "tony-hands:key-remap",
   game: "tony-hands:game",
+  saveFlushes: "tony-hands:save-flushes",
 });
 
 // The removed audio toggle wrote volume:0 with muted:false into EJS's global

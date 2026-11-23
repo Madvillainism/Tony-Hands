@@ -76,8 +76,6 @@ export function bootEmulator({ player, game = GAME, controls = KEYBOARD_CONTROLS
     window.EJS_gameName = game.label ?? GAME.name;
     // Per-game ID keeps EJS settings and save files isolated across the two discs.
     window.EJS_gameID = game.gameId ?? 1;
-    // Flush the in-game save to the filesystem every 15s, not only on exit.
-    window.EJS_fixedSaveInterval = 15000;
     // Optional savestate: EJS fetches it and loads it just after the game
     // starts. Leave the variable undefined when there is no state — an empty
     // string is still a string to EJS and makes it fetch this page as a state.

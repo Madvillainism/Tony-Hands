@@ -105,9 +105,10 @@ shown when you select Hands and in the Trick sheet.
 In-game saves (the progress you write at a THPS save point, not savestates) are
 stored in the browser's IndexedDB and restored automatically on your next
 visit. THPS 1 and THPS 2 use separate game IDs, so their saves do not mix. The
-core flushes the save every 15 seconds and whenever you hide or close the tab;
+page flushes the save every 5 seconds and whenever you hide or close the tab;
 EmulatorJS's own **Export Save File / Import Save File** toolbar buttons remain
-available if you want a downloadable backup.
+available if you want a downloadable backup. The `tony-hands:save-flushes`
+localStorage value counts flushes and can help diagnose a lost save.
 
 ### Keyboard
 

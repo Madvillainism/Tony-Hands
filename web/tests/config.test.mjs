@@ -34,6 +34,7 @@ test("game registry holds both PS1 titles with a selector default", () => {
   assert.deepEqual(GAMES.map((g) => g.gameId), [1, 2]);
   assert.equal(GAMES[1].rom, "games/thps2/thps2.chd");
   assert.equal(STORAGE_KEYS.game, "tony-hands:game");
+  assert.equal(STORAGE_KEYS.saveFlushes, "tony-hands:save-flushes");
 });
 
 test("resolveGame uses the URL or defaults to THPS 1, never saved storage", () => {
