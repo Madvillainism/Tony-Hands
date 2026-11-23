@@ -368,6 +368,21 @@ function applyRemapLive() {
   }
 }
 
+// EJS writes save files into an IDBFS mount but leaves its syncfs(false)
+// commented out, so flush explicitly before the tab can disappear.
+function flushSaves() {
+  const gameManager = getGameManager();
+  if (!gameManager) return;
+  try {
+    gameManager.saveSaveFiles();
+    gameManager.FS.syncfs(false, (error) => {
+      if (error) console.warn("Could not persist save file.", error);
+    });
+  } catch (error) {
+    console.warn("Could not flush save file.", error);
+  }
+}
+
 function bootGame(game = selectedGame) {
   if (!state.filesReady || state.booted) return;
 
@@ -390,11 +405,18 @@ function bootGame(game = selectedGame) {
     onGameStart: () => {
       applyRemapLive();
       setStatus("live", "Game running");
+      // The boot savestate lands a few ms after "start" and can carry empty
+      // SRAM. Re-read the persisted save file after it so progress shows up.
+      setTimeout(() => {
+        const gameManager = getGameManager();
+        if (gameManager?.getSaveFile(false)) gameManager.loadSaveFiles();
+      }, 150);
       if (state.mode === "gestures" && !state.introPending && !state.engine?.running) startEngine();
       // Make sure keys reach EJS immediately after the auto-boot (not on touch).
       focusGame();
     },
     onExit: () => {
+      flushSaves();
       stopEngine();
       releaseEverything();
       setStatus("idle", "Emulator stopped");
@@ -593,7 +615,10 @@ renderKeyGuide();
 wireDialogs();
 
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden) releaseEverything();
+  if (document.hidden) {
+    flushSaves();
+    releaseEverything();
+  }
 });
 
 // EmulatorJS requests fullscreen on #game and listens for keys there. Refocus
@@ -603,6 +628,7 @@ document.addEventListener("fullscreenchange", () => {
 });
 
 window.addEventListener("pagehide", () => {
+  flushSaves();
   releaseEverything();
   state.engine?.stop();
 });

@@ -11,8 +11,8 @@ const assets = globalThis.TONY_HANDS_ASSETS ?? {};
 // The game picker offers both PS1 titles. Remote builds inject a `games` array
 // with the R2 CHD URLs; local dev falls back to files under web/games/.
 const FALLBACK_GAMES = [
-  { id: "thps", label: "Tony Hawk's Pro Skater", rom: "games/thps.bin", year: 1999 },
-  { id: "thps2", label: "Tony Hawk's Pro Skater 2", rom: "games/thps2/thps2.chd", year: 2000 },
+  { id: "thps", gameId: 1, label: "Tony Hawk's Pro Skater", rom: "games/thps.bin", year: 1999 },
+  { id: "thps2", gameId: 2, label: "Tony Hawk's Pro Skater 2", rom: "games/thps2/thps2.chd", year: 2000 },
 ];
 
 // A game may carry a `stateUrl` (a RetroArch savestate loaded on boot). Remote

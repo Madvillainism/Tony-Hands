@@ -31,6 +31,7 @@ test("game registry holds both PS1 titles with a selector default", () => {
     ["thps", "thps2"],
   );
   assert.equal(DEFAULT_GAME_ID, "thps");
+  assert.deepEqual(GAMES.map((g) => g.gameId), [1, 2]);
   assert.equal(GAMES[1].rom, "games/thps2/thps2.chd");
   assert.equal(STORAGE_KEYS.game, "tony-hands:game");
 });

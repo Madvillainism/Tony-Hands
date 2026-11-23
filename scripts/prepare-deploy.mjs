@@ -56,8 +56,8 @@ await cp(src, dest, {
 // Main-menu savestates are optional and named after the game id. Only games
 // with a state/<id>.state file get a stateUrl, so other games boot normally.
 const games = [
-  { id: "thps", label: "Tony Hawk's Pro Skater", rom: `${base}/thps.chd`, year: 1999 },
-  { id: "thps2", label: "Tony Hawk's Pro Skater 2", rom: `${base}/thps2.chd`, year: 2000 },
+  { id: "thps", gameId: 1, label: "Tony Hawk's Pro Skater", rom: `${base}/thps.chd`, year: 1999 },
+  { id: "thps2", gameId: 2, label: "Tony Hawk's Pro Skater 2", rom: `${base}/thps2.chd`, year: 2000 },
 ];
 for (const game of games) {
   try {
