@@ -368,32 +368,154 @@ function applyRemapLive() {
   }
 }
 
-// EJS writes save files into an IDBFS mount but leaves its syncfs(false)
-// commented out, and this build ignores EJS_fixedSaveInterval. Own the flush.
-let saveFlushTimer = 0;
+// EJS keeps the memory card in the core, mirrors it into an IDBFS mount and
+// never syncs that mount: its own save interval writes the card but leaves the
+// commented-out syncfs(false) alone. The page owns the cadence instead — every
+// couple of seconds while the tab is visible, plus once when it hides.
+const SAVE_FLUSH_INTERVAL = 2000;
 
-function flushSaves() {
+let saveFlushTimer = 0;
+let flushing = false;
+let lastSavedHash = null;
+let flushAttempts = 0;
+let flushWrites = 0;
+let flushAdopts = 0;
+
+// FNV-1a over the 128 KB card. Cheap enough to run on every flush and the only
+// way to tell "this is our card" from "another tab saved over us".
+function cardHash(bytes) {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < bytes.length; i += 1) {
+    hash ^= bytes[i];
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
+
+function readCard(gameManager) {
+  try {
+    const path = gameManager.getSaveFilePath();
+    if (!gameManager.FS.analyzePath(path).exists) return null;
+    return gameManager.FS.readFile(path);
+  } catch {
+    return null;
+  }
+}
+
+/** Resolve once the mount is synced with IndexedDB. */
+function syncMount(gameManager, populate) {
+  return new Promise((resolve) => {
+    try {
+      gameManager.FS.syncfs(populate, (error) => {
+        if (error) console.warn("Could not sync the save folder.", error);
+        resolve(!error);
+      });
+    } catch (error) {
+      console.warn("Could not sync the save folder.", error);
+      resolve(false);
+    }
+  });
+}
+
+// Exposed for debugging: open the console and read `window.__tonySave`.
+function publishSaveState(action, card) {
   const gameManager = getGameManager();
-  if (!gameManager) return;
+  window.__tonySave = {
+    path: gameManager?.getSaveFilePath?.() ?? null,
+    attempts: flushAttempts,
+    writes: flushWrites,
+    adopts: flushAdopts,
+    action,
+    bytes: card?.length ?? 0,
+    hash: card ? cardHash(card) : null,
+    at: Date.now(),
+  };
+}
+
+function countFlush() {
   try {
     const count = Number(localStorage.getItem(STORAGE_KEYS.saveFlushes) ?? 0) + 1;
     localStorage.setItem(STORAGE_KEYS.saveFlushes, String(count));
   } catch {
     // Restricted storage: the counter is diagnostic only.
   }
+}
+
+/** Remember the card as it exists in the mount so flushes can spot another tab. */
+function syncSaveBaseline() {
+  const gameManager = getGameManager();
+  const bytes = gameManager ? readCard(gameManager) : null;
+  lastSavedHash = bytes ? cardHash(bytes) : null;
+}
+
+/**
+ * Pull the persisted card out of IndexedDB and hand it to the core. Another
+ * tab may have saved while this one was idle or hidden, and a stale buffer
+ * must never be pushed over a newer card.
+ *
+ * @returns {Promise<boolean>} true when the core adopted a different card
+ */
+async function adoptPersistedCard() {
+  const gameManager = getGameManager();
+  if (!gameManager) return false;
+  if (!(await syncMount(gameManager, true))) return false;
+  const card = readCard(gameManager);
+  if (!card) return false;
+  const hash = cardHash(card);
+  if (hash === lastSavedHash) return false;
+  gameManager.loadSaveFiles();
+  lastSavedHash = hash;
+  flushAdopts += 1;
+  publishSaveState("adopted", card);
+  return true;
+}
+
+async function flushSaves() {
+  const gameManager = getGameManager();
+  if (!gameManager || flushing) return;
+
+  flushing = true;
+  flushAttempts += 1;
+  countFlush();
+
   try {
+    // The core's card is only readable once EJS copies it into the mount.
+    const before = readCard(gameManager);
+    const beforeHash = before ? cardHash(before) : null;
     gameManager.saveSaveFiles();
-    gameManager.FS.syncfs(false, (error) => {
-      if (error) console.warn("Could not persist save file.", error);
-    });
+    const mine = readCard(gameManager);
+    if (!mine) {
+      publishSaveState("empty");
+      return;
+    }
+    const mineHash = cardHash(mine);
+
+    if (mineHash !== beforeHash) {
+      // The game saved since the last flush: publish it.
+      await syncMount(gameManager, false);
+      lastSavedHash = mineHash;
+      flushWrites += 1;
+      publishSaveState("wrote", mine);
+      return;
+    }
+
+    // Nothing new in this tab, but another tab may have saved meanwhile.
+    // Emscripten's mount is per tab, so a sync from IndexedDB is the only way
+    // to see a card that a sibling tab wrote.
+    if (await adoptPersistedCard()) return;
+    if (lastSavedHash === null) lastSavedHash = mineHash;
+    publishSaveState("idle", mine);
   } catch (error) {
+    publishSaveState("failed");
     console.warn("Could not flush save file.", error);
+  } finally {
+    flushing = false;
   }
 }
 
 function startSaveFlushes() {
-  if (saveFlushTimer) return;
-  saveFlushTimer = window.setInterval(flushSaves, 5000);
+  if (saveFlushTimer || document.hidden) return;
+  saveFlushTimer = window.setInterval(flushSaves, SAVE_FLUSH_INTERVAL);
 }
 
 function stopSaveFlushes() {
@@ -401,6 +523,9 @@ function stopSaveFlushes() {
   window.clearInterval(saveFlushTimer);
   saveFlushTimer = 0;
 }
+
+// Tests and support can force a flush without waiting for the timer.
+window.__tonyFlushSaves = flushSaves;
 
 function bootGame(game = selectedGame) {
   if (!state.filesReady || state.booted) return;
@@ -426,17 +551,19 @@ function bootGame(game = selectedGame) {
       setStatus("live", "Game running");
       startSaveFlushes();
       // The boot savestate lands a few ms after "start" and can carry empty
-      // SRAM. Re-read the persisted save file after it so progress shows up.
+      // SRAM. Re-read the persisted save file after it so progress shows up,
+      // then treat that card as the baseline for stale-write detection.
       setTimeout(() => {
         const gameManager = getGameManager();
         if (gameManager?.getSaveFile(false)) gameManager.loadSaveFiles();
+        syncSaveBaseline();
       }, 150);
       if (state.mode === "gestures" && !state.introPending && !state.engine?.running) startEngine();
       // Make sure keys reach EJS immediately after the auto-boot (not on touch).
       focusGame();
     },
     onExit: () => {
-      flushSaves();
+      // EmulatorJS already writes the card before it unmounts /data/saves.
       stopSaveFlushes();
       stopEngine();
       releaseEverything();
@@ -638,8 +765,15 @@ wireDialogs();
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     flushSaves();
+    stopSaveFlushes();
     releaseEverything();
+    return;
   }
+  // Another tab may have saved while this one was in the background, so take
+  // the persisted card back before resuming flushes.
+  adoptPersistedCard()
+    .catch((error) => console.warn("Could not adopt the saved card.", error))
+    .finally(startSaveFlushes);
 });
 
 // EmulatorJS requests fullscreen on #game and listens for keys there. Refocus

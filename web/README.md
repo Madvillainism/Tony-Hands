@@ -105,10 +105,30 @@ shown when you select Hands and in the Trick sheet.
 In-game saves (the progress you write at a THPS save point, not savestates) are
 stored in the browser's IndexedDB and restored automatically on your next
 visit. THPS 1 and THPS 2 use separate game IDs, so their saves do not mix. The
-page flushes the save every 5 seconds and whenever you hide or close the tab;
-EmulatorJS's own **Export Save File / Import Save File** toolbar buttons remain
-available if you want a downloadable backup. The `tony-hands:save-flushes`
-localStorage value counts flushes and can help diagnose a lost save.
+page copies the memory card out of the emulator every 2 seconds while the tab is
+visible and once more when you hide or close it; EmulatorJS's own **Export Save
+File / Import Save File** toolbar buttons remain available if you want a
+downloadable backup.
+
+Open two tabs on the same game and only the card you last saved in wins: the
+other tab reloads the saved card instead of overwriting it with an older copy.
+
+`tony-hands:save-flushes` in localStorage counts flushes, and `window.__tonySave`
+in the console reports the last action (`wrote`, `adopted`, `idle`), the card
+path and its size — both help diagnose a lost save.
+
+The save path is covered by end-to-end tests that drive the real page in a
+throwaway Chrome profile:
+
+```powershell
+node web/tests/e2e/saves.e2e.mjs              # storage, reopen, two tabs, per-game
+$env:E2E_FULL = "1"; node web/tests/e2e/saves.e2e.mjs   # also play THPS2 to a save
+```
+
+`E2E_SITE` points the suite at another build (for example
+`http://127.0.0.1:8123` after `node scripts/prepare-deploy.mjs`), `E2E_HEADED=1`
+shows the browser, `E2E_ONLY=<text>` filters tests and `E2E_SHOTS=<dir>` writes
+emulator screenshots.
 
 ### Keyboard
 

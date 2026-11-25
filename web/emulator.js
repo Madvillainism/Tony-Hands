@@ -52,6 +52,7 @@ export function getGameManager() {
 }
 
 let bootPromise = null;
+let exitWired = false;
 
 /**
  * Inject EmulatorJS once. Normally the emulator shows its own start screen;
@@ -107,11 +108,15 @@ export function bootEmulator({ player, game = GAME, controls = KEYBOARD_CONTROLS
     // repeat visits boot fast; a deploy override can set 0 to avoid the
     // ~600 MB IndexedDB copy on memory-constrained devices.
     window.EJS_CacheLimit = DEPLOY.cacheLimit;
-    window.EJS_onExit = () => onExit?.();
     window.EJS_onGameStart = () => {
       const emulator = getEmulator();
       // Never let EJS's built-in gamepad appear over our touch controls.
       emulator?.toggleVirtualGamepad?.(false);
+      // EmulatorJS has no EJS_onExit hook; subscribe to its event instead.
+      if (emulator && !exitWired) {
+        exitWired = true;
+        emulator.on("exit", () => onExit?.());
+      }
       onGameStart?.(emulator);
       resolve(emulator);
     };
